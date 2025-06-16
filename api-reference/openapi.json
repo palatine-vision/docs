@@ -1,72 +1,24 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
+    "title": "Cloud AI Audio API",
+    "description": "Default combined OpenAPI schema for audio transcription and diarization proxy.",
     "version": "1.0.0"
   },
-  "servers": [
-    {
-      "url": "http://sandbox.mintlify.com"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
+    "/api/v1/cloud_ai/transcription/do_transcribe": {
       "post": {
-        "description": "Creates a new plant in the store",
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Transcribe",
+        "description": "Преобразует аудио в текст с помощью AI-распознавания речи.\n\n## Поддерживаемые форматы\nWAV, FLAC, OGG, MP3 *(другие форматы могут потребовать конвертации)*",
+        "operationId": "transcribe_do_transcribe_post",
         "requestBody": {
-          "description": "Plant to add to the store",
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/Body_transcribe_do_transcribe_post"
               }
             }
           },
@@ -74,21 +26,21 @@
         },
         "responses": {
           "200": {
-            "description": "plant response",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/TranscribeTaskSchedule"
                 }
               }
             }
           },
-          "400": {
-            "description": "unexpected error",
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -96,57 +48,257 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/api/v1/cloud_ai/transcription/task_status/{task_id}": {
+      "get": {
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Task Status",
+        "description": "Проверка статуса задачи.",
+        "operationId": "task_status_task_status__task_id__get",
         "parameters": [
           {
-            "name": "id",
+            "name": "task_id",
             "in": "path",
-            "description": "ID of plant to delete",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string",
+              "title": "Task Id"
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
+          "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
           }
         }
       }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    },
+    "/api/v1/cloud_ai/transcription/task_done/{task_id}": {
       "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Task Done",
+        "description": "Отметка задачи как выполненной.",
+        "operationId": "task_done_task_done__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDoneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
+        }
+      }
+    },
+    "/api/v1/audio/transcriptions": {
+      "post": {
+        "tags": [
+          "OpenAI output format"
+        ],
+        "summary": "Openai Transcribe",
+        "operationId": "openai_transcribe_openai_transcribe_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_openai_transcribe_openai_transcribe_post"
+              }
+            }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionSegments"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cloud_ai/diarization/do_diarize": {
+      "post": {
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Diarize",
+        "description": "Разделяет аудио на сегменты по спикерам с временными метками.\n\n## Поддерживаемые форматы\nWAV, FLAC, OGG, MP3 *(другие форматы могут потребовать конвертации)*",
+        "operationId": "diarize_do_diarize_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_diarize_do_diarize_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DizrizeTaskSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cloud_ai/diarization/task_status/{task_id}": {
+      "get": {
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Task Status",
+        "description": "Проверка статуса задачи.",
+        "operationId": "task_status_task_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cloud_ai/diarization/task_done/{task_id}": {
+      "post": {
+        "tags": [
+          "DIGIS output format"
+        ],
+        "summary": "Task Done",
+        "description": "Отметка задачи как выполненной.",
+        "operationId": "task_done_task_done__task_id__post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDoneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
@@ -154,63 +306,439 @@
   },
   "components": {
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
+      "Body_openai_transcribe_openai_transcribe_post": {
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
           }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
+        },
         "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_openai_transcribe_openai_transcribe_post"
+      },
+      "Body_transcribe_do_transcribe_post": {
         "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_transcribe_do_transcribe_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "TaskDoneResponse": {
+        "properties": {
+          "status": {
+            "type": "boolean",
+            "title": "Status",
+            "description": "Статус выполнения операции"
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "title": "Message",
+            "description": "Сообщение о результате операции"
           }
-        }
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "TaskDoneResponse",
+        "description": "Модель ответа для эндпоинта отметки задачи как выполненной"
+      },
+      "TaskStatusResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Идентификатор пользователя/задачи"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionResult"
+              },
+              {
+                "$ref": "#/components/schemas/TranscriptionError"
+              }
+            ],
+            "title": "Data",
+            "description": "Данные задачи или сообщение об ошибке"
+          },
+          "task_status": {
+            "type": "boolean",
+            "title": "Task Status",
+            "description": "Статус выполненной задачи. False - задача выполнена с ошибкой"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "data",
+          "task_status"
+        ],
+        "title": "TaskStatusResponse",
+        "description": "Модель ответа для эндпоинта проверки статуса задачи"
+      },
+      "TranscribeTaskSchedule": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Статус запуска задачи транскрипции"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "ID задачи транскрипции"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "task_id"
+        ],
+        "title": "TranscribeTaskSchedule",
+        "description": "Модель данных, представляющая результат, возвращаемый при запуске задачи транскрипции"
+      },
+      "TranscriptionError": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Сообщение ошибки"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "description": "Статус код ошибки"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "status_code"
+        ],
+        "title": "TranscriptionError",
+        "description": "Модель данных для ошибки транскрипции"
+      },
+      "TranscriptionResult": {
+        "properties": {
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionSegments"
+              },
+              {
+                "$ref": "#/components/schemas/TranscriptionError"
+              }
+            ],
+            "title": "Result",
+            "description": "Список сегментов транскрипции или сообщение об ошибке."
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "TranscriptionResult",
+        "description": "Модель данных, представляющая результат транскрипции."
+      },
+      "TranscriptionSegment": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Уникальный идентификатор сегмента транскрипции."
+          },
+          "seek": {
+            "type": "integer",
+            "title": "Seek",
+            "description": "Значение 'seek', представляющее позицию сегмента в аудио."
+          },
+          "start": {
+            "type": "number",
+            "title": "Start",
+            "description": "Время начала сегмента в секундах."
+          },
+          "end": {
+            "type": "number",
+            "title": "End",
+            "description": "Время окончания сегмента в секундах."
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "Текст транскрибированного сегмента."
+          },
+          "tokens": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Tokens",
+            "description": "Список токенов, представляющих текст сегмента."
+          },
+          "avg_logprob": {
+            "type": "number",
+            "title": "Avg Logprob",
+            "description": "Средняя логарифмическая вероятность для сегмента."
+          },
+          "compression_ratio": {
+            "type": "number",
+            "title": "Compression Ratio",
+            "description": "Коэффициент сжатия для сегмента."
+          },
+          "no_speech_prob": {
+            "type": "number",
+            "title": "No Speech Prob",
+            "description": "Вероятность того, что сегмент не содержит речи."
+          },
+          "words": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Words",
+            "description": "Детализация по словам (может быть None)."
+          },
+          "temperature": {
+            "type": "number",
+            "title": "Temperature",
+            "description": "Температура, использованная при транскрипции для сегмента."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "seek",
+          "start",
+          "end",
+          "text",
+          "tokens",
+          "avg_logprob",
+          "compression_ratio",
+          "no_speech_prob",
+          "temperature"
+        ],
+        "title": "TranscriptionSegment",
+        "description": "Модель данных, представляющая один сегмент транскрипции."
+      },
+      "TranscriptionSegments": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "Полный текст транскрипции"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptionSegment"
+            },
+            "type": "array",
+            "title": "Segments",
+            "description": "Список сегментов транскрипции"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segments"
+        ],
+        "title": "TranscriptionSegments",
+        "description": "Модель данных, представляющая список сегментов транскрипции и полный текст."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Body_diarize_do_diarize_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_diarize_do_diarize_post"
+      },
+      "DiarizationError": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Сообщение ошибки"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "description": "Статус код ошибки"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "status_code"
+        ],
+        "title": "DiarizationError",
+        "description": "Модель данных для ошибки диаризации"
+      },
+      "DiarizationResult": {
+        "properties": {
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiarizationSegments"
+              },
+              {
+                "$ref": "#/components/schemas/DiarizationError"
+              }
+            ],
+            "title": "Result",
+            "description": "Список сегментов диаризации или сообщение об ошибке."
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "DiarizationResult",
+        "description": "Модель данных, представляющая список сегментов диаризации."
+      },
+      "DiarizationSegment": {
+        "properties": {
+          "segment_id": {
+            "type": "integer",
+            "title": "Segment Id",
+            "description": "Уникальный идентификатор сегмента диаризации."
+          },
+          "speaker": {
+            "type": "string",
+            "title": "Speaker",
+            "description": "Идентификатор говорящего в сегменте (например, 'SPEAKER_01')."
+          },
+          "start": {
+            "type": "number",
+            "title": "Start",
+            "description": "Время начала сегмента в секундах."
+          },
+          "end": {
+            "type": "number",
+            "title": "End",
+            "description": "Время окончания сегмента в секундах."
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment_id",
+          "speaker",
+          "start",
+          "end"
+        ],
+        "title": "DiarizationSegment",
+        "description": "Модель данных, представляющая один сегмент диаризации."
+      },
+      "DiarizationSegments": {
+        "properties": {
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/DiarizationSegment"
+            },
+            "type": "array",
+            "title": "Segments",
+            "description": "Список сегментов диаризации"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segments"
+        ],
+        "title": "DiarizationSegments",
+        "description": "Модель данных, представляющая список сегментов диаризации"
+      },
+      "DizrizeTaskSchedule": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Статус запуска задачи транскрипции"
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "ID задачи транскрипции"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "task_id"
+        ],
+        "title": "DizrizeTaskSchedule",
+        "description": "Модель данных, представляющая результат, возвращаемый при запуске задачи диаризации"
       }
     }
   }

@@ -1,0 +1,284 @@
+---
+title: 'Использование Palatine Speech API'
+---
+
+Этот API предоставляет удобный способ для автоматической транскрибации и диаризации аудио через облако.
+Поддерживаются такие задачи, как перевод аудио в текст с таймкодами (транскрибация) и сегментация по спикерам (диаризация).
+
+## Быстрый старт
+
+Все запросы выполняются по защищённым URL (см. ниже).
+Для большинства методов требуется авторизация через токен:
+
+Передавайте токен в заголовке:
+
+```http
+Authorization: Bearer <ваш_токен>
+````
+
+## Эндпоинты
+
+### 1. Транскрибация (Transcription)
+
+---
+
+#### 1.1. Транскрибировать аудио
+
+**POST /api/v1/cloud\_ai/transcription/do_transcribe**
+
+Загрузите аудиофайл (WAV, FLAC, OGG, MP3) для получения текста.
+
+**Пример запроса (Python, requests):**
+
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/v1/cloud_ai/transcription/do_transcribe"
+TOKEN = "<YOUR_TOKEN>"
+
+files = {"file": open("audio.wav", "rb")}
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.post(API_URL, files=files, headers=headers)
+print(response.json())
+```
+
+**Пример ответа:**
+
+```json
+{
+  "status": "scheduled",
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
+
+---
+
+#### 1.2. Проверить статус задачи
+
+**GET /api/v1/cloud\_ai/transcription/task_status/{task_id}**
+
+Получить статус и результат задачи транскрибации.
+
+**Пример запроса:**
+
+```python
+import requests
+
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/cloud_ai/transcription/task_status/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.get(API_URL, headers=headers)
+print(response.json())
+```
+
+**Пример успешного ответа:**
+
+```json
+{
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "data": {
+    "result": {
+      "text": "Добро пожаловать!",
+      "segments": [
+        {
+          "id": 0,
+          "start": 0.0,
+          "end": 1.23,
+          "text": "Добро пожаловать!",
+          "tokens": [50257, 456],
+          "avg_logprob": -0.12,
+          "compression_ratio": 1.0,
+          "no_speech_prob": 0.01,
+          "temperature": 0.0
+        }
+      ]
+    }
+  },
+  "task_status": True
+}
+```
+
+---
+
+#### 1.3. Отметить задачу как завершённую
+
+**POST /api/v1/cloud\_ai/transcription/task_done/{task_id}**
+
+Используется для ручного завершения задачи, если требуется.
+
+**Пример запроса:**
+
+```python
+import requests
+
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/cloud_ai/transcription/task_done/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.post(API_URL, headers=headers)
+print(response.json())
+```
+
+---
+
+#### 1.4. Транскрипция в формате OpenAI
+
+**POST /api/v1/audio/transcriptions**
+
+Для получения результата в структуре, совместимой с OpenAI API.
+
+**Пример запроса:**
+
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/v1/audio/transcriptions"
+files = {"file": open("audio.wav", "rb")}
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.post(API_URL, files=files, headers=headers)
+print(response.json())
+```
+
+---
+
+### 2. Диаризация (Diarization)
+
+#### 2.1. Диаризировать аудио
+
+**POST /api/v1/cloud_ai/diarization/do_diarize**
+
+Отправьте аудиофайл для получения сегментов с определением спикеров.
+
+**Пример запроса:**
+
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/v1/cloud_ai/diarization/do_diarize"
+files = {"file": open("audio.wav", "rb")}
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.post(API_URL, files=files, headers=headers)
+print(response.json())
+```
+
+**Пример ответа:**
+
+```json
+{
+  "status": "scheduled",
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
+
+---
+
+#### 2.2. Проверить статус задачи диаризации
+
+**GET /api/v1/cloud\_ai/diarization/task_status/{task_id}**
+
+**Пример запроса:**
+
+```python
+import requests
+
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/cloud_ai/diarization/task_status/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.get(API_URL, headers=headers)
+print(response.json())
+```
+
+**Пример ответа:**
+
+```json
+{
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "data": {
+    "result": {
+      "segments": [
+        {
+          "segment_id": 0,
+          "speaker": "SPEAKER_01",
+          "start": 0.0,
+          "end": 2.5
+        }
+      ]
+    }
+  },
+  "task_status": True
+}
+```
+
+---
+
+#### 2.3. Отметить задачу диаризации как завершённую
+
+**POST /api/v1/cloud\_ai/diarization/task_done/{task_id}**
+
+**Пример запроса:**
+
+```python
+import requests
+
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/cloud_ai/diarization/task_done/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.post(API_URL, headers=headers)
+print(response.json())
+```
+
+---
+
+## Ошибки
+
+Все ответы с ошибкой возвращают соответствующий HTTP-код и объект с описанием ошибки:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "file"],
+      "msg": "field required",
+      "type": "value_error.missing"
+    }
+  ]
+}
+```
+
+---
+
+## Поддерживаемые форматы аудио
+
+* WAV
+* FLAC
+* OGG
+* MP3
+
+---
+
+## Требования к авторизации
+
+Большинство запросов требует заголовка:
+
+```http
+Authorization: Bearer <ваш_токен>
+```
+
+Токен можно получить в системе управления пользователями вашей платформы.
+
+---
+
+## Примечания
+
+* Размер файлов и ограничения на время обработки зависят от конфигурации сервера.
+* Для работы в проде используйте https.
+* Для OpenAI-совместимого вывода используйте `/api/v1/audio/transcriptions`.
+
+---
+

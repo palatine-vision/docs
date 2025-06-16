@@ -1,0 +1,69 @@
+---
+title: 'Polling API: Принцип работы'
+---
+
+В Cloud AI Audio API для асинхронных задач (транскрибация и диаризация) используется подход polling API.
+Это значит, что клиент получает идентификатор задачи (`task_id`) и периодически опрашивает сервер для получения статуса выполнения и результата.
+
+## Как это работает
+
+1. **Запуск задачи**
+   Вы отправляете аудиофайл через POST-запрос (`/do_transcribe` или `/do_diarize`).
+   Сервер сразу отвечает статусом (например, `scheduled`) и уникальным `task_id`.
+
+2. **Опрос статуса**
+   Клиент с помощью `task_id` периодически выполняет GET-запрос на endpoint статуса задачи:
+   - `/api/v1/cloud_ai/transcription/task_status/{task_id}`
+   - `/api/v1/cloud_ai/diarization/task_status/{task_id}`
+
+   Если задача всё ещё выполняется, в ответе будет соответствующий статус.
+   Когда задача завершена — сервер отдаёт результат.
+
+3. **(Необязательно) Завершение задачи вручную**
+   В некоторых случаях предусмотрен POST-запрос `/task_done/{task_id}`, чтобы явно отметить задачу как завершённую.
+
+## Пример Polling на Python
+
+```python
+import requests
+import time
+
+API_URL = "https://api.palatine.ru/api/v1/cloud_ai/transcription/do_transcribe"
+STATUS_URL = "https://api.palatine.ru/api/v1/cloud_ai/transcription/task_status/{task_id}"
+TOKEN = "<YOUR_TOKEN>"
+
+files = {"file": open("audio.wav", "rb")}
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+# 1. Запуск задачи
+response = requests.post(API_URL, files=files, headers=headers)
+task_id = response.json()["task_id"]
+
+# 2. Polling результата
+while True:
+    status_response = requests.get(STATUS_URL.format(task_id=task_id), headers=headers)
+    result = status_response.json()
+    if result.get("task_status"):  # Если задача завершена
+        print("Готово:", result)
+        break
+    else:
+        print("Задача ещё в работе, ждем 3 секунды...")
+        time.sleep(3)
+````
+
+## Особенности
+
+* Интервал опроса (например, 2-5 секунд) выбирается в зависимости от нагрузки и желаемой скорости реакции.
+* В ответе статус может быть булевым флагом (`task_status: true` — задача завершена) и содержать либо результат, либо сообщение об ошибке.
+* После получения результата желательно прекратить polling (чтобы не нагружать сервер).
+
+## Используйте Polling для:
+
+* Асинхронных задач, выполнение которых может занять значительное время (например, длинные аудиофайлы).
+* Обеспечения пользователя актуальной информацией о прогрессе.
+
+---
+
+**Пример Polling аналогично работает и для эндпоинтов диаризации!**
+
+---
