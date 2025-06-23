@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Palatine Speech",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#AE2020",
+    "light": "#CE5151",
+    "dark": "#990707"
   },
   "favicon": "/favicon.svg",
   "navigation": {
