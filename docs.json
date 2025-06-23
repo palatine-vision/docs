@@ -4,7 +4,7 @@
   "name": "Palatine Speech",
   "colors": {
     "primary": "#350938",
-    "light": "#AD1C41",
+    "light": "#350938",
     "dark": "#350938"
   },
   "favicon": "/favicon.svg",
