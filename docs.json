@@ -29,11 +29,11 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "DIGIS output format",
+            "group": "Polling API",
             "pages": [
-              "api-reference/transcribe/digis-output-format/transcribe",
-              "api-reference/transcribe/digis-output-format/task-done",
-              "api-reference/transcribe/digis-output-format/task-status"
+              "api-reference/transcribe/polling-api/transcribe",
+              "api-reference/transcribe/polling-api/task-done",
+              "api-reference/transcribe/polling-api/task-status"
             ]
           }
         ]
