@@ -8,6 +8,9 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
+  "api": {
+    "openapi": ["https://api.palatine.ru/api/v1/transcribe/openapi.json"]
+  },
   "navigation": {
     "tabs": [
       {
@@ -26,15 +29,11 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Endpoint Examples",
+            "group": "DIGIS output format",
             "pages": [
-              "api-reference/endpoint/diarization-task-done",
-              "api-reference/endpoint/diarization-task-status",
-              "api-reference/endpoint/do-diarize",
-              "api-reference/endpoint/do-transcribe",
-              "api-reference/endpoint/openai-transcribe",
-              "api-reference/endpoint/transcription-task-done",
-              "api-reference/endpoint/transcription-task-status"
+              "api-reference/transcribe/digis-output-format/transcribe",
+              "api-reference/transcribe/digis-output-format/task-done",
+              "api-reference/transcribe/digis-output-format/task-status"
             ]
           }
         ]
