@@ -13,7 +13,11 @@
   },
   "favicon": "/favicon.svg",
   "api": {
-    "openapi": ["https://api.palatine.ru/api/v1/transcribe/openapi.json"]
+    "openapi": [
+      "https://api.palatine.ru/api/v1/transcribe/openapi.json",
+      "https://api.palatine.ru/api/v1/audio/openapi.json",
+      "https://api.palatine.ru/api/v1/diarization/openapi.json"
+    ]
   },
   "navigation": {
     "tabs": [
@@ -33,11 +37,25 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Polling API",
+            "group": "Transcribe polling API",
             "pages": [
-              "api-reference/transcribe/polling-api/transcribe",
-              "api-reference/transcribe/polling-api/task-done",
-              "api-reference/transcribe/polling-api/task-status"
+              "api-reference/transcribe/transcribe-polling-api/transcribe",
+              "api-reference/transcribe/transcribe-polling-api/task-done",
+              "api-reference/transcribe/transcribe-polling-api/task-status"
+            ]
+          },
+            {
+            "group": "Transcribe OpenAI API",
+            "pages": [
+              "api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe"
+            ]
+          },
+            {
+            "group": "Diarization polling API",
+            "pages": [
+              "api-reference/diarization/diarization-polling-api/diarize",
+              "api-reference/diarization/diarization-polling-api/task-done",
+              "api-reference/diarization/diarization-polling-api/task-status"
             ]
           }
         ]
