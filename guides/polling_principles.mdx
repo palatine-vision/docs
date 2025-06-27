@@ -12,14 +12,12 @@ title: 'Polling API: Принцип работы'
    Сервер сразу отвечает статусом (например, `scheduled`) и уникальным `task_id`.
 
 2. **Опрос статуса**
-   Клиент с помощью `task_id` периодически выполняет GET-запрос на endpoint статуса задачи:
-   - `/api/v1/cloud_ai/transcription/task_status/{task_id}`
-   - `/api/v1/cloud_ai/diarization/task_status/{task_id}`
+   Клиент с помощью `task_id` периодически выполняет GET-запрос на endpoint статуса задачи `task_status/{task_id}`.
 
    Если задача всё ещё выполняется, в ответе будет соответствующий статус.
    Когда задача завершена — сервер отдаёт результат.
 
-3. **(Необязательно) Завершение задачи вручную**
+3. **Завершение задачи вручную**
    В некоторых случаях предусмотрен POST-запрос `/task_done/{task_id}`, чтобы явно отметить задачу как завершённую.
 
 ## Пример Polling на Python
@@ -28,11 +26,11 @@ title: 'Polling API: Принцип работы'
 import requests
 import time
 
-API_URL = "https://api.palatine.ru/api/v1/cloud_ai/transcription/do_transcribe"
-STATUS_URL = "https://api.palatine.ru/api/v1/cloud_ai/transcription/task_status/{task_id}"
+API_URL = "https://api.palatine.ru/api/v1/transcribe/do_transcribe"
+STATUS_URL = "https://api.palatine.ru/api/v1/transcribe/task_status/{task_id}"
 TOKEN = "<YOUR_TOKEN>"
 
-files = {"file": open("audio.wav", "rb")}
+files = {"file": open("audio.mp3", "rb")}
 headers = {"Authorization": f"Bearer {TOKEN}"}
 
 # 1. Запуск задачи

@@ -35,8 +35,8 @@
           {
             "group": "Быстрый старт",
             "pages": [
-              "usage",
-              "polling_principles"
+              "guides/usage",
+              "guides/polling_principles"
             ]
           }
         ]
