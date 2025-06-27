@@ -1,15 +1,18 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "willow",
   "name": "Palatine Speech",
+  "description": "Speech-to-Text API, диаризация, распознавание речи, speaker diarization, cloud AI, REST API, gRPC, WebSocket, ASR, NLP, Palatine",
   "colors": {
     "primary": "#350938",
     "light": "#EA4881",
     "dark": "#B80E4A"
   },
   "background": {
-    "light": "/images/background-light.png",
-    "dark": "/images/background.png"
+    "image": {
+      "light": "/images/background-light.png",
+      "dark": "/images/background-dark.png"
+    }
   },
   "favicon": "/favicon.svg",
   "api": {
@@ -17,12 +20,17 @@
       "https://api.palatine.ru/api/v1/transcribe/openapi.json",
       "https://api.palatine.ru/api/v1/audio/openapi.json",
       "https://api.palatine.ru/api/v1/diarization/openapi.json"
-    ]
+    ],
+    "mdx": {
+      "auth": {
+        "method": "bearer"
+      }
+    }
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Документация",
         "groups": [
           {
             "group": "Быстрый старт",
@@ -34,7 +42,7 @@
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "API",
         "groups": [
           {
             "group": "Transcribe polling API",
@@ -66,24 +74,16 @@
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude"]
+  },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
+    "links": [],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Palatine",
+      "href": "https://palatine.ru/"
     }
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
-  }
+  "footer": {}
 }
