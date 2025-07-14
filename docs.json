@@ -11,7 +11,7 @@
   "background": {
     "image": {
       "light": "/images/background-light.png",
-      "dark": "/images/background-dark.png"
+      "dark": "/images/background-dark.webp"
     }
   },
   "favicon": "/favicon.svg",
