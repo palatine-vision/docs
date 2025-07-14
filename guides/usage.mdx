@@ -176,7 +176,7 @@ print(response.json())
 import requests
 
 task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-API_URL = f"https://api.palatine.ru/api/v1/transcribe/task_status/{task_id}"
+API_URL = f"https://api.palatine.ru/api/v1/diarization/task_status/{task_id}"
 headers = {"Authorization": f"Bearer {TOKEN}"}
 
 response = requests.get(API_URL, headers=headers)
@@ -214,7 +214,7 @@ print(response.json())
 import requests
 
 task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-API_URL = f"https://api.palatine.ru/api/v1/transcribe/task_done/{task_id}"
+API_URL = f"https://api.palatine.ru/api/v1/diarization/task_done/{task_id}"
 headers = {"Authorization": f"Bearer {TOKEN}"}
 
 response = requests.post(API_URL, headers=headers)
