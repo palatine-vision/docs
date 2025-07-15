@@ -10,8 +10,8 @@
   },
   "background": {
     "image": {
-      "light": "/images/background-light.png",
-      "dark": "/images/background-dark.webp"
+      "light": "/images/background-light-2k.webp",
+      "dark": "/images/background-dark-2k.webp"
     }
   },
   "favicon": "/favicon.svg",
