@@ -5,7 +5,7 @@
   "description": "Speech-to-Text API, диаризация, распознавание речи, speaker diarization, cloud AI, REST API, gRPC, WebSocket, ASR, NLP, Palatine",
   "colors": {
     "primary": "#350938",
-    "light": "#EA4881",
+    "light": "#e6e6e6",
     "dark": "#B80E4A"
   },
   "background": {
