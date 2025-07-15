@@ -13,11 +13,14 @@
       "light": "/images/background-light-2k.webp",
       "dark": "/images/background-dark-2k.webp"
     },
-    "decoration": "gradient"
+    "color": {
+      "light": "#E6E6E6",
+      "dark": "#0D0D0D"
+    }
   },
   "favicon": {
-    "light": "favicon-light.svg",
-    "dark": "favicon-dark.svg"
+    "light": "/favicon-light.svg",
+    "dark": "/favicon-dark.svg"
   },
   "api": {
     "openapi": [
