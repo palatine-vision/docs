@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# macOS-friendly script to generate MDX from OpenAPI using Mintlify scraping
+# Mirrors commands from Windows script: gen_mdx.cmd
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "Error: npx not found. Please install Node.js (https://nodejs.org) to use this script." >&2
+  exit 1
+fi
+
+mkdir -p ./api-reference/transcribe \
+         ./api-reference/transcribe_openai \
+         ./api-reference/diarization
+
+echo "Generating Transcribe API docs..."
+npx @mintlify/scraping@latest openapi-file \
+  https://api.palatine.ru/api/v1/transcribe/openapi.json \
+  -o ./api-reference/transcribe
+
+echo "Generating OpenAI-compatible Audio API docs..."
+npx @mintlify/scraping@latest openapi-file \
+  https://api.palatine.ru/api/v1/audio/openapi.json \
+  -o ./api-reference/transcribe_openai
+
+echo "Generating Diarization API docs..."
+npx @mintlify/scraping@latest openapi-file \
+  https://api.palatine.ru/api/v1/diarization/openapi.json \
+  -o ./api-reference/diarization
+
+echo "Done. Output saved under ./api-reference/"
+

@@ -1,102 +1,104 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "theme": "willow",
+  "name": "Palatine Speech",
+  "description": "Speech-to-Text API, диаризация, распознавание речи, speaker diarization, cloud AI, REST API, gRPC, WebSocket, ASR, NLP, Palatine",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#350938",
+    "light": "#EA4881",
+    "dark": "#B80E4A"
   },
-  "favicon": "/favicon.svg",
+  "background": {
+    "decoration": "windows",
+    "color": {
+      "light": "#E6E6E6",
+      "dark": "#0C0C0C"
+    }
+  },
+  "favicon": {
+    "light": "/favicon-light.svg",
+    "dark": "/favicon-dark.svg"
+  },
+  "api": {
+    "openapi": [
+      "https://api.palatine.ru/api/v1/transcribe/openapi.json",
+      "https://api.palatine.ru/api/v1/audio/openapi.json",
+      "https://api.palatine.ru/api/v1/diarization/openapi.json"
+    ],
+    "mdx": {
+      "auth": {
+        "method": "bearer"
+      }
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Документация",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Quick start",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "documentation/quick_start/quick_start"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Advanced tutorial",
+            "pages": []
+          },
+          {
+            "group": "Technical information",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "documentation/technical_information/supported_languages",
+              "documentation/technical_information/supported_files",
+              "documentation/technical_information/polling_principles"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "API",
         "groups": [
           {
-            "group": "API Documentation",
+            "group": "Transcribe polling API",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/transcribe/transcribe-polling-api/transcribe",
+              "api-reference/transcribe/transcribe-polling-api/task-done",
+              "api-reference/transcribe/transcribe-polling-api/task-status"
             ]
           },
-          {
-            "group": "Endpoint Examples",
+            {
+            "group": "Transcribe OpenAI API",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe"
+            ]
+          },
+            {
+            "group": "Diarization polling API",
+            "pages": [
+              "api-reference/diarization/diarization-polling-api/diarize",
+              "api-reference/diarization/diarization-polling-api/task-done",
+              "api-reference/diarization/diarization-polling-api/task-status"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude"]
+  },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
+    "links": [],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Palatine",
+      "href": "https://palatine.ru/"
     }
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
-  }
+  "footer": {}
 }
