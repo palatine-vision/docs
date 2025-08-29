@@ -9,10 +9,7 @@
     "dark": "#B80E4A"
   },
   "background": {
-    "image": {
-      "light": "/images/background-light-2k.webp",
-      "dark": "/images/background-dark-2k.webp"
-    },
+    "decoration": "windows",
     "color": {
       "light": "#E6E6E6",
       "dark": "#0C0C0C"
@@ -40,10 +37,21 @@
         "tab": "Документация",
         "groups": [
           {
-            "group": "Быстрый старт",
+            "group": "Quick start",
             "pages": [
-              "guides/usage",
-              "guides/polling_principles"
+              "documentation/quick_start/quick_start"
+            ]
+          },
+          {
+            "group": "Advanced tutorial",
+            "pages": []
+          },
+          {
+            "group": "Technical information",
+            "pages": [
+              "documentation/technical_information/supported_languages",
+              "documentation/technical_information/supported_files",
+              "documentation/technical_information/polling_principles"
             ]
           }
         ]

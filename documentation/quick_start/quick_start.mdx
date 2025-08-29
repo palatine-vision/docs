@@ -1,0 +1,180 @@
+---
+title: 'Использование Palatine Speech API'
+---
+
+Этот API предоставляет удобный способ для автоматической транскрибации и диаризации аудио через облако Palatine Speech.
+Поддерживаются такие задачи, как перевод аудио и видео в текст с таймкодами (транскрибация), а так же
+сегментация по спикерам (диаризация), создание субтитров в формате SRT и VTT.
+
+## Быстрый старт
+
+> **Важно** Все запросы выполняются по защищённым URL.
+Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
+```http
+Authorization: Bearer <ваш_токен>
+```
+
+### Транскрипция в формате OpenAI
+
+Для получения результата в структуре, совместимой с OpenAI API.
+
+**Пример запроса:**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+	base_url="https://api.palatine.ru/api/v1",
+	api_key="KEY"
+)
+
+with open("audio.mp3", "rb") as f:
+	result = client.audio.transcriptions.create(
+      file=f,
+      model="palatine_audio",
+      # при необходимости можно выбрать один из вариантов форматов ответа
+      # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
+    )
+
+print(result)
+```
+
+---
+
+## Пример трансктрипции с помощью polling API
+
+
+<AccordionGroup>
+  <Accordion title="Загрузка файла">
+    Загрузите аудиофайл для получения текста.
+
+        ```python
+        import requests
+
+        API_URL = "https://api.palatine.ru/api/v1/transcribe/do_transcribe"
+        TOKEN = "<YOUR_TOKEN>"
+
+        files = {"file": open("audio.mp3", "rb")}
+        headers = {"Authorization": f"Bearer {TOKEN}"}
+
+        response = requests.post(API_URL, files=files, headers=headers)
+        print(response.json())
+        ```
+
+        Пример ответа:
+
+        ```json
+        {
+          "status": "scheduled",
+          "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        }
+        ```
+  </Accordion>
+
+  <Accordion title="Проверка статуса задачи">
+
+    Получить статус и результат задачи транскрибации.
+
+    ```python
+    import requests
+
+    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    API_URL = f"https://api.palatine.ru/api/v1/transcribe/task_status/{task_id}"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    response = requests.get(API_URL, headers=headers)
+    print(response.json())
+    ```
+      Всего задачи имеют 3 статуса:
+      - "success": задача выполнена успешно
+      - "pending": задача ещё в процессе выполнения
+      - "error": при выполнении задачи произошла ошибка
+
+      Пример успешного ответа:
+
+      > **Важно** Формат возвращаемого результата может задаваться с помощью параметра response_format.
+      Поддерживаются 'srt' и 'vtt'. Задаётся с помощью свойства params, например: ```params={"response_format": "vtt"}```.
+
+      ```json
+      {
+        "id": "ea7040ab-edbf-407f-9123-dc8033185a08",
+          "created_at": "2025-08-26T20:47:17.856937Z",
+          "data": {
+            "duration": 16.431,
+            "language": "ru",
+            "text": "Говорит Москва, передаем сообщение ТАСС о первом в мире полете человека в космическое пространство.",
+            "segments": [
+              {
+                "id": 1,
+                "seek": 0,
+                "start": 0.0,
+                "end": 13.712,
+                "text": " Говорит Москва, передаем сообщение ТАСС о первом в мире полете человека в космическое пространство.",
+                "tokens": [
+                  7247,
+                  6362,
+                  1635,
+                  32327,
+                  755,
+                  20635,
+                  11,
+                  15621,
+                  7906,
+                  40626,
+                  5627,
+                  3200,
+                  5594,
+                  8068,
+                  8068,
+                  1000,
+                  11922,
+                  1253,
+                  740,
+                  36822,
+                  4692,
+                  10524,
+                  25109,
+                  740,
+                  31839,
+                  919,
+                  9347,
+                  22128,
+                  4178,
+                  28484,
+                  9631,
+                  13
+                ],
+                "avg_logprob": -0.03858404448538116,
+                "compression_ratio": 1.4375,
+                "no_speech_prob": 7.0125511300589416e-12,
+                "words": null,
+                "temperature": 0.0
+              }
+            ],
+            "words": null
+          },
+          "status": "success",
+          "error": null
+        }
+      ```
+  </Accordion>
+
+  <Accordion title="Завершение задачи">
+    После завершения работы с задачей её необходимо завершить.
+
+    ```python
+    import requests
+
+    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    API_URL = f"https://api.palatine.ru/api/v1/transcribe/task_done/{task_id}"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    response = requests.post(API_URL, headers=headers)
+    print(response.json())
+    ```
+
+  </Accordion>
+</AccordionGroup>
+
+
+---
