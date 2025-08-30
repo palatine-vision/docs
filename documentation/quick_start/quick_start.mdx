@@ -8,12 +8,6 @@ title: 'Использование Palatine Speech API'
 
 ## Быстрый старт
 
-> **Важно** Все запросы выполняются по защищённым URL.
-Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
-```http
-Authorization: Bearer <ваш_токен>
-```
-
 ### Транскрипция в формате OpenAI
 
 Для получения результата в структуре, совместимой с OpenAI API.
@@ -25,7 +19,7 @@ from openai import OpenAI
 
 client = OpenAI(
 	base_url="https://api.palatine.ru/api/v1",
-	api_key="KEY"
+	api_key="<YOUR_TOKEN>"
 )
 
 with open("audio.mp3", "rb") as f:
@@ -43,6 +37,11 @@ print(result)
 
 ## Пример трансктрипции с помощью polling API
 
+> **Важно** Все запросы выполняются по защищённым URL.
+Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
+```http
+Authorization: Bearer <ваш_токен>
+```
 
 <AccordionGroup>
   <Accordion title="Загрузка файла">
