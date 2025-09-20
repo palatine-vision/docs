@@ -1,0 +1,29 @@
+
+# Документация Palatine Speech
+
+> Документация Palatine Speech — это комплексный справочник по облачной платформе обработки речи от Palatine. Платформа предоставляет API для автоматического распознавания речи (speech‑to‑text), транскрибации аудио и видео с таймкодами, сегментации по спикерам (диаризация), генерации субтитров и перевода аудио в текст. Сервис поддерживает множество языков и форматов файлов, что делает его универсальным инструментом для корпоративных и коммерческих приложений.
+
+Платформа Palatine Speech интегрируется через OpenAI‑совместимый API и поддерживает асинхронный polling API для работы с длинными аудиофайлами. Документация содержит пошаговые инструкции, примеры кода на Python и рекомендации по оптимальной работе с сервисом.
+
+## Руководства
+
+- [Использование Palatine Speech API](https://docs.speech.palatine.ru/documentation/quick_start/quick_start): пошаговый «быстрый старт» по использованию API. Охватывает отправку аудиофайлов на транскрибацию или диаризацию через `api.palatine.ru/api/v1`, выбор формата ответа (json, verbose_json, text, srt, vtt), получение результата, примеры кода и работу с polling API.
+
+## Техническая информация
+
+- [Поддерживаемые языки](https://docs.speech.palatine.ru/documentation/technical_information/languages): таблица с кодами языков (например, en, ru, fr) и их русскими названиями. Раздел описывает, как явно указать язык для транскрибации или доверить определение языку автоматически.
+- [Поддерживаемые форматы аудио и видео](https://docs.speech.palatine.ru/documentation/technical_information/supported_files): детальный перечень MIME‑типов аудио (AIFF, FLAC, M4A/AAC, MP3, OGG, Opus, WAV и др.) и видеоформатов (AVI, MKV, MOV, MP4), из которых извлекается аудио для распознавания.
+- [Polling API: принцип работы](https://docs.speech.palatine.ru/documentation/technical_information/polling_principles): описание асинхронного механизма обработки задач. Показывает, как получить `task_id`, опрашивать сервер о статусе задачи, дождаться результата и корректно завершить процесс.
+- [API‑справочник Palatine Speech](https://docs.speech.palatine.ru/api-reference): полный список всех доступных REST‑эндпоинтов для транскрибации, диаризации и создания субтитров, включая параметры запросов и примеры использования.
+
+## API
+
+Эндпоинты Palatine Speech API:
+
+ - [POST `/transcribe/do_transcribe`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/transcribe): преобразует аудио в текст (AI‑распознавание речи) и возвращает идентификатор асинхронной задачиhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/transcribe#:~:text=cURL.
+ - [POST `/transcribe/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-done): отмечает задачу транскрипции как завершённую и удаляет её данные из кэшаhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-done#:~:text=cURL.
+ - [GET `/transcribe/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-status): возвращает текущий статус и результат задачи транскрипции при готовностиhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-status#:~:text=Task%20Status.
+ - [POST `/audio/transcriptions`](https://docs.speech.palatine.ru/api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe): совместимый с OpenAI Audio API эндпоинт для транскрибации аудио и видеоhttps://docs.speech.palatine.ru/api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe#:~:text=Openai%20Transcribe.
+ - [POST `/diarization/do_diarize`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/diarize): разделяет аудио на сегменты по спикерам и возвращает идентификатор асинхронной задачиhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/diarize#:~:text=Diarize.
+ - [POST `/diarization/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-done): отмечает задачу диаризации как завершённой и удаляет её данные из кэшаhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-done#:~:text=Task%20Done.
+ - [GET `/diarization/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-status): возвращает текущий статус и результат задачи диаризацииhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-status#:~:text=Task%20Status.
