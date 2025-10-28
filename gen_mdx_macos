@@ -12,7 +12,9 @@ fi
 
 mkdir -p ./api-reference/transcribe \
          ./api-reference/transcribe_openai \
-         ./api-reference/diarization
+         ./api-reference/diarization \
+         ./api-reference/sentiment-analysis \
+         ./api-reference/ai-service
 
 echo "Generating Transcribe API docs..."
 npx @mintlify/scraping@latest openapi-file \
@@ -28,6 +30,16 @@ echo "Generating Diarization API docs..."
 npx @mintlify/scraping@latest openapi-file \
   https://api.palatine.ru/api/v1/diarization/openapi.json \
   -o ./api-reference/diarization
+
+echo "Generating Sentiment Analysis API docs..."
+npx @mintlify/scraping@latest openapi-file \
+  https://api.palatine.ru/api/v1/sentiment_analysis/openapi.json \
+  -o ./api-reference/sentiment-analysis
+
+echo "Generating AI Service API docs..."
+npx @mintlify/scraping@latest openapi-file \
+  https://api.palatine.ru/api/v1/ai_service/openapi.json \
+  -o ./api-reference/ai-service
 
 echo "Done. Output saved under ./api-reference/"
 
