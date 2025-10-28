@@ -84,12 +84,12 @@
             ]
           },
           {
-              "group": "Sentiment analysis polling API",
-              "pages": [
-                "api-reference/sentiment-analysis/sentiment-analysis-polling-api/sentiment-analysis",
-                "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-done",
-                "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-status"
-              ]
+            "group": "Sentiment analysis polling API",
+            "pages": [
+              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/sentiment-analysis",
+              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-done",
+              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-status"
+            ]
           },
           {
             "group": "AI Service polling API",
