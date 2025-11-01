@@ -23,7 +23,7 @@ client = OpenAI(
 with open("audio.mp3", "rb") as f:
 	result = client.audio.transcriptions.create(
         file=f,
-        model="palatine_audio",
+        model="palatine_large_turbo", # так же доступна более быстрая модель palatine_small
         # при необходимости можно выбрать один из вариантов форматов ответа
         # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
     )
