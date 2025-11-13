@@ -1,5 +1,5 @@
 ---
-title: 'Использование Palatine Speech API'
+title: 'Транскрибация и диаризации'
 ---
 
 Этот API предоставляет удобный способ для автоматической транскрибации и диаризации аудио через облако Palatine Speech.
@@ -172,6 +172,32 @@ Authorization: Bearer <ваш_токен>
     response = requests.post(API_URL, headers=headers)
     print(response.json())
     ```
+
+  </Accordion>
+
+  <Accordion title="Выгрузка результатов в файл">
+
+    Если задача успешно завершена, результат можно забрать в готовом файловом формате.
+    Поддерживаемые форматы: `srt`, `vtt`, `txt`, `csv` и `xlsx` — укажите нужное значение в параметре `file_format`.
+
+    ```python
+    import requests
+
+    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    API_URL = f"https://api.palatine.ru/api/v1/transcribe/download_as_file/{task_id}"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    params = {"file_format": "srt"}
+
+    response = requests.get(API_URL, headers=headers, params=params)
+    if response.ok:
+        with open(f"transcription.{params['file_format']}", "wb") as f:
+            f.write(response.content)
+    else:
+        print(response.json())
+    ```
+
+    Эндпоинт вернёт файл при статусе задачи `success`, 404 — если задача не найдена, и 409 — если она ещё в обработке.
+    Так удобно получить итоговые субтитры или таблицу без дополнительной пост‑обработки.
 
   </Accordion>
 </AccordionGroup>

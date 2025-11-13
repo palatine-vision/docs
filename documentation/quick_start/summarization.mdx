@@ -1,0 +1,150 @@
+---
+title: 'Суммаризация встреч и текстов'
+---
+
+Palatine AI Service превращает длинные записи встреч или подготовленные тексты в короткие конспекты.
+Можно выбрать готовый сценарий `meeting_summary` или передать свой `prompt`, чтобы управлять стилем и структурой ответа.
+Параметр `thinking` включает расширенный reasoning перед выдачей ответа (по умолчанию выключен),
+что даёт более качественный результат, но занимает больше времени и использует большее количество
+токенов для выполнения задачи.
+
+### Суммаризация через polling API
+
+> **Важно** Все запросы выполняются по защищённым URL.
+Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
+```http
+Authorization: Bearer <ваш_токен>
+```
+
+<AccordionGroup>
+  <Accordion title="Загрузка файла (аудио/видео)">
+    Отправьте медиафайл на эндпоинт `POST /ai_service/summarize_file`.
+    В query-параметрах укажите желаемую задачу (`meeting_summary` по умолчанию) и опциональный `prompt`.
+
+        ```python
+        import requests
+
+        API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_file"
+        TOKEN = "<YOUR_TOKEN>"
+        headers = {"Authorization": f"Bearer {TOKEN}"}
+
+        # Пример параметров для готового сценария
+        params = {
+            "task": "meeting_summary",
+            "thinking": False  # включите True, если нужен развернутый reasoning
+        }
+
+        # Пример параметров для пользовательского сценария
+        params = {
+            "task": "user_prompt",
+            "prompt": "Кратко перескажи основные решения",
+            "thinking": False # включите True, если нужен развернутый reasoning
+        }
+
+        files = {"file": open("meeting.mp3", "rb")}
+        response = requests.post(API_URL, headers=headers, params=params, files=files)
+        print(response.json())
+        ```
+
+        Пример ответа:
+
+        ```json
+        {
+          "status": "scheduled",
+          "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        }
+        ```
+  </Accordion>
+
+  <Accordion title="Суммаризация текста">
+
+    Если расшифровка уже есть, можно отправить чистый текст на `POST /ai_service/summarize_text`.
+
+    ```python
+    import requests
+
+    API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_text"
+    TOKEN = "<YOUR_TOKEN>"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    params = {"task": "user_prompt", "prompt": "Выдели риски и договоренности"}
+
+    payload = "Протокол встречи ..."
+    response = requests.post(API_URL, headers=headers, params=params, json=payload)
+    print(response.json())
+    ```
+
+    В теле запроса обязательно должна быть строка с текстом — именно она суммаризируется. Остальные параметры работают так же, как при загрузке файла.
+  </Accordion>
+
+  <Accordion title="Проверка статуса задачи">
+
+    Получите статус и результат асинхронной задачи.
+
+    ```python
+    import requests
+
+    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_status/{task_id}"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    response = requests.get(API_URL, headers=headers)
+    print(response.json())
+    ```
+      Статусы:
+      - "success": задача выполнена успешно
+      - "pending": задача ещё в процессе выполнения
+      - "error": при выполнении задачи произошла ошибка
+
+      Пример успешного ответа (для `meeting_summary`):
+
+      ```json
+      {
+        "id": "d1cc9f25-9a8d-4a35-9f80-7f9c6e94a111",
+        "created_at": "2025-02-11T12:04:01.123456Z",
+        "data": {
+          "meeting_title": "Синхронизация маркетинга и продаж",
+          "meeting_goals": [
+            {"content": "Выравнять воронку лидов на март"},
+            {"content": "Определить план активаций"}
+          ],
+          "decisions_made": [
+            {"content": "Старт пилота с обновленным оффером 15 марта"}
+          ],
+          "tasks_to_execute": [
+            {"content": "Продажи: подготовить скрипты до 12 марта"},
+            {"content": "Маркетинг: запустить кампанию в соцсетях"}
+          ],
+          "open_questions": [
+            {"content": "Подтвердить бюджет на digital-каналы"}
+          ],
+          "qa_items": [
+            {"question": "Какой KPI по лидам?", "answer": "200 квалифицированных лидов за месяц"}
+          ],
+          "meeting_title": "Синхронизация маркетинга и продаж"
+        },
+        "status": "success",
+        "error": null
+      }
+      ```
+      При `task=user_prompt` поле `data` содержит объект `content` с ответом в стилe вашего промпта.
+  </Accordion>
+
+  <Accordion title="Завершение задачи">
+    После получения результата пометьте задачу завершённой, чтобы освободить ресурсы.
+
+    ```python
+    import requests
+
+    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_done/{task_id}"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    response = requests.post(API_URL, headers=headers)
+    print(response.json())
+    ```
+
+  </Accordion>
+</AccordionGroup>
+
+
+---
