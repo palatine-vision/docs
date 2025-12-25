@@ -26,6 +26,7 @@ with open("audio.mp3", "rb") as f:
         model="palatine_large_turbo", # так же доступна более быстрая модель palatine_small
         # при необходимости можно выбрать один из вариантов форматов ответа
         # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
+        # extra_query={"fast_inference": False} если необходимо выключить более быстрый движок для инференса с целью улучшения качества транскрибации (по-умолчанию True)
     )
 
 print(result)
