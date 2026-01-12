@@ -23,6 +23,9 @@
     "playground": {
       "display": "simple"
     },
+    "examples": {
+      "languages": []
+    },
     "openapi": [
       "https://api.palatine.ru/api/v1/transcribe/openapi.json",
       "https://api.palatine.ru/api/v1/audio/openapi.json",
@@ -45,6 +48,7 @@
             "group": "Quick start",
             "pages": [
               "documentation/quick_start/transcription",
+              "documentation/quick_start/streaming",
               "documentation/quick_start/sentiment_analyze",
               "documentation/quick_start/summarization"
             ]

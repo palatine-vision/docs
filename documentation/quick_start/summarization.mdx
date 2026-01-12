@@ -4,147 +4,222 @@ title: 'Суммаризация встреч и текстов'
 
 Palatine AI Service превращает длинные записи встреч или подготовленные тексты в короткие конспекты.
 Можно выбрать готовый сценарий `meeting_summary` или передать свой `prompt`, чтобы управлять стилем и структурой ответа.
-Параметр `thinking` включает расширенный reasoning перед выдачей ответа (по умолчанию выключен),
-что даёт более качественный результат, но занимает больше времени и использует большее количество
-токенов для выполнения задачи.
+
+<Steps>
+  <Step title="Отправка данных">POST /summarize_file или /summarize_text</Step>
+  <Step title="Получение task_id">API вернёт task_id для отслеживания</Step>
+  <Step title="Polling статуса">GET /task_status/{task_id} — опрашивайте до получения результата</Step>
+  <Step title="Завершение">POST /task_done/{task_id} — освободите ресурсы</Step>
+</Steps>
+
+<Tip>
+Параметр `thinking` включает расширенный reasoning перед выдачей ответа (по умолчанию выключен). Даёт более качественный результат, но занимает больше времени.
+</Tip>
+
+---
 
 ### Суммаризация через polling API
 
-> **Важно** Все запросы выполняются по защищённым URL.
-Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
-```http
-Authorization: Bearer <ваш_токен>
-```
+<Note>
+Все запросы требуют авторизации через токен в заголовке: `Authorization: Bearer <ваш_токен>`
+</Note>
 
 <AccordionGroup>
   <Accordion title="Загрузка файла (аудио/видео)">
     Отправьте медиафайл на эндпоинт `POST /ai_service/summarize_file`.
-    В query-параметрах укажите желаемую задачу (`meeting_summary` по умолчанию) и опциональный `prompt`.
 
-        ```python
-        import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-        API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_file"
-        TOKEN = "<YOUR_TOKEN>"
-        headers = {"Authorization": f"Bearer {TOKEN}"}
+API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_file"
+TOKEN = "<YOUR_TOKEN>"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-        # Пример параметров для готового сценария
-        params = {
-            "task": "meeting_summary",
-            "thinking": False  # включите True, если нужен развернутый reasoning
-        }
+# Готовый сценарий meeting_summary
+params = {
+    "task": "meeting_summary",
+    "thinking": False
+}
 
-        # Пример параметров для пользовательского сценария
-        params = {
-            "task": "user_prompt",
-            "prompt": "Кратко перескажи основные решения",
-            "thinking": False # включите True, если нужен развернутый reasoning
-        }
+# Или пользовательский промпт
+# params = {
+#     "task": "user_prompt",
+#     "prompt": "Кратко перескажи основные решения",
+#     "thinking": False
+# }
 
-        files = {"file": open("meeting.mp3", "rb")}
-        response = requests.post(API_URL, headers=headers, params=params, files=files)
-        print(response.json())
-        ```
+files = {"file": open("meeting.mp3", "rb")}
+response = requests.post(API_URL, headers=headers, params=params, files=files)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/ai_service/summarize_file?task=meeting_summary&thinking=false" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@meeting.mp3"
+```
+  </Tab>
+</Tabs>
 
-        Пример ответа:
-
-        ```json
-        {
-          "status": "scheduled",
-          "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        }
-        ```
+Пример ответа:
+```json
+{
+  "status": "scheduled",
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
   </Accordion>
 
   <Accordion title="Суммаризация текста">
 
-    Если расшифровка уже есть, можно отправить чистый текст на `POST /ai_service/summarize_text`.
+Если расшифровка уже есть, можно отправить чистый текст на `POST /ai_service/summarize_text`.
 
-    ```python
-    import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-    API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_text"
-    TOKEN = "<YOUR_TOKEN>"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
-    params = {"task": "user_prompt", "prompt": "Выдели риски и договоренности"}
+API_URL = "https://api.palatine.ru/api/v1/ai_service/summarize_text"
+TOKEN = "<YOUR_TOKEN>"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+params = {"task": "user_prompt", "prompt": "Выдели риски и договоренности"}
 
-    payload = "Протокол встречи ..."
-    response = requests.post(API_URL, headers=headers, params=params, json=payload)
-    print(response.json())
-    ```
+response = requests.post(
+    API_URL,
+    headers=headers,
+    params=params,
+    json={"text": "Протокол встречи ..."}
+)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/ai_service/summarize_text?task=user_prompt&prompt=Выдели%20риски" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Протокол встречи ..."}'
+```
+  </Tab>
+</Tabs>
 
-    В теле запроса обязательно должна быть строка с текстом — именно она суммаризируется. Остальные параметры работают так же, как при загрузке файла.
   </Accordion>
 
   <Accordion title="Проверка статуса задачи">
 
-    Получите статус и результат асинхронной задачи.
+Получите статус и результат асинхронной задачи.
 
-    ```python
-    import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_status/{task_id}"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_status/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.get(API_URL, headers=headers)
-    print(response.json())
-    ```
-      Статусы:
-      - "success": задача выполнена успешно
-      - "pending": задача ещё в процессе выполнения
-      - "error": при выполнении задачи произошла ошибка
+response = requests.get(API_URL, headers=headers)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl "https://api.palatine.ru/api/v1/ai_service/task_status/{task_id}" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+  </Tab>
+</Tabs>
 
-      Пример успешного ответа (для `meeting_summary`):
+**Статусы задачи:**
+- `success` — задача выполнена успешно
+- `pending` — задача ещё в процессе выполнения
+- `error` — при выполнении задачи произошла ошибка
 
-      ```json
-      {
-        "id": "d1cc9f25-9a8d-4a35-9f80-7f9c6e94a111",
-        "created_at": "2025-02-11T12:04:01.123456Z",
-        "data": {
-          "meeting_title": "Синхронизация маркетинга и продаж",
-          "meeting_goals": [
-            {"content": "Выравнять воронку лидов на март"},
-            {"content": "Определить план активаций"}
-          ],
-          "decisions_made": [
-            {"content": "Старт пилота с обновленным оффером 15 марта"}
-          ],
-          "tasks_to_execute": [
-            {"content": "Продажи: подготовить скрипты до 12 марта"},
-            {"content": "Маркетинг: запустить кампанию в соцсетях"}
-          ],
-          "open_questions": [
-            {"content": "Подтвердить бюджет на digital-каналы"}
-          ],
-          "qa_items": [
-            {"question": "Какой KPI по лидам?", "answer": "200 квалифицированных лидов за месяц"}
-          ],
-          "meeting_title": "Синхронизация маркетинга и продаж"
-        },
-        "status": "success",
-        "error": null
-      }
-      ```
-      При `task=user_prompt` поле `data` содержит объект `content` с ответом в стилe вашего промпта.
+Пример успешного ответа (для `meeting_summary`):
+```json
+{
+  "id": "d1cc9f25-9a8d-4a35-9f80-7f9c6e94a111",
+  "created_at": "2025-02-11T12:04:01.123456Z",
+  "data": {
+    "meeting_title": "Синхронизация маркетинга и продаж",
+    "meeting_goals": [
+      {"content": "Выравнять воронку лидов на март"},
+      {"content": "Определить план активаций"}
+    ],
+    "established_facts": [
+      {"content": "Текущая конверсия воронки 12%"}
+    ],
+    "existing_problems": [
+      {"content": "Низкая скорость обработки заявок"}
+    ],
+    "decisions_made": [
+      {"content": "Старт пилота с обновленным оффером 15 марта"}
+    ],
+    "tasks_to_execute": [
+      {"content": "Продажи: подготовить скрипты до 12 марта"},
+      {"content": "Маркетинг: запустить кампанию в соцсетях"}
+    ],
+    "open_questions": [
+      {"content": "Подтвердить бюджет на digital-каналы"}
+    ],
+    "qa_items": [
+      {"question": "Какой KPI по лидам?", "answer": "200 квалифицированных лидов за месяц"}
+    ]
+  },
+  "status": "success",
+  "error": null
+}
+```
+
+<Tip>
+При `task=user_prompt` поле `data` содержит объект с полем `content` — ответ в стиле вашего промпта.
+</Tip>
   </Accordion>
 
   <Accordion title="Завершение задачи">
-    После получения результата пометьте задачу завершённой, чтобы освободить ресурсы.
+После получения результата пометьте задачу завершённой, чтобы освободить ресурсы.
 
-    ```python
-    import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_done/{task_id}"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/ai_service/task_done/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.post(API_URL, headers=headers)
-    print(response.json())
-    ```
+response = requests.post(API_URL, headers=headers)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/ai_service/task_done/{task_id}" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+  </Tab>
+</Tabs>
+
+  </Accordion>
+
+  <Accordion title="Обработка ошибок">
+
+| HTTP код | Описание | Решение |
+|----------|----------|---------|
+| 401 | Неверный или отсутствующий токен | Проверьте токен авторизации |
+| 404 | Задача не найдена | Проверьте task_id или создайте новую задачу |
+| 500 | Внутренняя ошибка сервера | Повторите запрос или обратитесь в поддержку |
+
+**Ошибки в поле `error` ответа:**
+| Сообщение | Причина | Решение |
+|-----------|---------|---------|
+| No recognizable speech | В аудио нет распознаваемой речи | Используйте файл с чёткой речью |
+| Not enough balance | Недостаточно средств на балансе | Пополните баланс |
 
   </Accordion>
 </AccordionGroup>
-
 
 ---
