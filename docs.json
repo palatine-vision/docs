@@ -27,11 +27,7 @@
       "languages": []
     },
     "openapi": [
-      "https://api.palatine.ru/api/v1/transcribe/openapi.json",
-      "https://api.palatine.ru/api/v1/audio/openapi.json",
-      "https://api.palatine.ru/api/v1/diarization/openapi.json",
-      "https://api.palatine.ru/api/v1/sentiment_analysis/openapi.json",
-      "https://api.palatine.ru/api/v1/ai_service/openapi.json"
+      "https://api.palatine.ru/api/v1/cloud_api/openapi.json"
     ],
     "mdx": {
       "auth": {
@@ -73,41 +69,41 @@
           {
             "group": "Transcribe polling API",
             "pages": [
-              "api-reference/transcribe/transcribe-polling-api/transcribe",
-              "api-reference/transcribe/transcribe-polling-api/task-done",
-              "api-reference/transcribe/transcribe-polling-api/task-status",
-              "api-reference/transcribe/transcribe-polling-api/download-as-file"
+              "api-reference/transcribe-polling-api/transcribe",
+              "api-reference/transcribe-polling-api/download-as-file",
+              "api-reference/transcribe-polling-api/task-done",
+              "api-reference/transcribe-polling-api/task-status"
             ]
           },
           {
             "group": "Transcribe OpenAI API",
             "pages": [
-              "api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe"
+              "api-reference/transcribe-openai-api/openai-transcribe"
             ]
           },
           {
             "group": "Diarization polling API",
             "pages": [
-              "api-reference/diarization/diarization-polling-api/diarize",
-              "api-reference/diarization/diarization-polling-api/task-done",
-              "api-reference/diarization/diarization-polling-api/task-status"
+              "api-reference/diarization-polling-api/diarize",
+              "api-reference/diarization-polling-api/task-done",
+              "api-reference/diarization-polling-api/task-status"
             ]
           },
           {
             "group": "Sentiment analysis polling API",
             "pages": [
-              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/sentiment-analysis",
-              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-done",
-              "api-reference/sentiment-analysis/sentiment-analysis-polling-api/task-status"
+              "api-reference/sentiment-analysis-polling-api/sentiment-analysis",
+              "api-reference/sentiment-analysis-polling-api/task-done",
+              "api-reference/sentiment-analysis-polling-api/task-status"
             ]
           },
           {
-            "group": "AI Service polling API",
+            "group": "AI Service",
             "pages": [
-              "api-reference/ai-service/ai-service/summarize-file",
-              "api-reference/ai-service/ai-service/summarize-text",
-              "api-reference/ai-service/ai-service/task-done",
-              "api-reference/ai-service/ai-service/task-status"
+              "api-reference/ai-service/summarize-file",
+              "api-reference/ai-service/summarize-text",
+              "api-reference/ai-service/task-done",
+              "api-reference/ai-service/task-status"
             ]
           }
         ]
