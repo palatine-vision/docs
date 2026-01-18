@@ -1,0 +1,771 @@
+---
+title: 'Потоковая транскрибация'
+---
+
+Потоковый API предоставляет возможность транскрибации аудио в реальном времени через WebSocket-соединение.
+Результаты распознавания приходят по мере обработки аудио, что идеально подходит для live-транскрибации,
+голосовых интерфейсов и интерактивных приложений.
+
+### Производительность
+
+Замеры осуществлялись разными людьми с помощью нашего бенчмарка на разных устройствах и разных интернет-соединениях.
+Вот результаты:
+
+| Метрика | Min | Median | Max |
+|---------|-----|--------|-----|
+| End-to-End latency | 64.50 ms | 81.92 ms | 105.94 ms |
+| Real-Time Factor | 0.19 | 0.19 | 0.19 |
+
+Real-Time Factor `< 1` - скорость обработки быстрее real-time.
+
+<Note>
+Данные измерения получены для формата **linear16** (raw PCM) без декодирования.
+
+При использовании сжатых форматов (opus, ogg-opus, mp3, aac и др.) к задержке добавляется **50–100 мс** на декодирование в зависимости от кодека.
+
+Фактические значения latency зависят от скорости вашего интернет-соединения и могут отличаться.
+</Note>
+
+---
+
+> **Важно** Все запросы требуют авторизации через токен, передаваемый в query-параметре.
+
+### Пример потоковой транскрибации
+
+<AccordionGroup>
+  <Accordion title="Подключение к WebSocket">
+    Установите WebSocket-соединение с указанием токена авторизации.
+
+    **URL для подключения:**
+    ``` python
+    wss://api.palatine.ru/api/v1/stream/asr
+    ```
+
+    **Параметры подключения:**
+
+    | Параметр | Обязательный | По умолчанию | Описание |
+    |----------|--------------|--------------|----------|
+    | `token` | Да | — | API токен для авторизации |
+    | `model` | Нет | `palatine_stream` | Модель распознавания |
+    | `language` | Нет | `ru` | Язык аудио (ISO код) |
+    | `sample_rate` | Нет | `48000` | Частота дискретизации входного аудио (8000-48000 Hz) |
+    | `codec` | Нет | `linear16` | Кодек/формат аудио (см. список поддерживаемых кодеков) |
+    | `channels` | Нет | `1` | Количество каналов (1 — mono, 2 — stereo) |
+
+    **Формат аудио для отправки:**
+    - Поддерживаемые частоты: **8000, 16000, 22050, 32000, 44100, 48000 Hz**
+    - Каналы: **1** (mono) или **2** (stereo)
+    - Рекомендуемый формат: **linear16** (int16 PCM, little-endian)
+
+    <Tip>
+    Для минимальной задержки используйте raw PCM форматы (`linear16` или `linear32`).
+    При использовании сжатых кодеков (opus, mp3 и др.) добавляется 50–100 мс на декодирование.
+    Оптимальный размер отправляемого чанка — от 50 до 300 мс.
+    </Tip>
+
+    После успешного подключения сервер отправит сообщение с конфигурацией:
+
+    ```json
+    {
+      "type": "config",
+      "model": "palatine_stream",
+      "sample_rate": 48000,
+      "channels": 1,
+      "format": "linear16",
+      "language": "ru",
+      "recommended_codec": "linear16",
+      "supported_codecs": ["linear16", "linear32", "opus", "flac", "mp3", "aac", "alaw", "mulaw", "amr-nb", "amr-wb", "ogg-opus", "speex", "g729"],
+      "supported_sample_rates": [8000, 16000, 22050, 32000, 44100, 48000]
+    }
+    ```
+
+    | Поле | Описание |
+    |------|----------|
+    | `model` | Используемая модель распознавания |
+    | `sample_rate` | Ожидаемая частота дискретизации |
+    | `channels` | Количество каналов |
+    | `format` | Используемый кодек |
+    | `language` | Язык распознавания |
+    | `recommended_codec` | Рекомендуемый кодек для минимальной задержки |
+    | `supported_codecs` | Список всех поддерживаемых кодеков |
+    | `supported_sample_rates` | Список поддерживаемых частот дискретизации |
+  </Accordion>
+
+  <Accordion title="Отправка аудио">
+    Отправляйте аудиоданные как бинарные WebSocket-сообщения.
+
+    ```python
+    import asyncio
+    import websockets
+    import wave
+
+    API_URL = "wss://api.palatine.ru/api/v1/stream/asr"
+    TOKEN = "<YOUR_TOKEN>"
+    SAMPLE_RATE = 48000  # Частота дискретизации аудиофайла
+
+    async def stream_audio():
+        url = f"{API_URL}?token={TOKEN}&sample_rate={SAMPLE_RATE}&codec=linear16"
+
+        async with websockets.connect(url) as ws:
+            # Получаем конфигурацию
+            config = await ws.recv()
+            print(f"Конфигурация: {config}")
+
+            # Читаем и отправляем аудиофайл
+            with wave.open("audio.wav", "rb") as wf:
+                # 150ms при текущем sample_rate (sample_rate * 0.15 * 2 bytes)
+                chunk_size = int(SAMPLE_RATE * 0.15 * 2)
+                while True:
+                    data = wf.readframes(chunk_size // 2)
+                    if not data:
+                        break
+                    await ws.send(data)
+
+                    # Получаем промежуточные результаты
+                    try:
+                        result = await asyncio.wait_for(ws.recv(), timeout=0.1)
+                        print(result)
+                    except asyncio.TimeoutError:
+                        pass
+
+            # Сигнализируем об окончании потока
+            await ws.send(b'')
+
+            # Получаем оставшиеся результаты
+            async for message in ws:
+                print(message)
+
+    asyncio.run(stream_audio())
+    ```
+
+    > **Совет** Размер чанков может быть произвольным. Сервер буферизует данные
+    и обрабатывает их блоками по 300ms.
+  </Accordion>
+
+  <Accordion title="Получение результатов">
+    Сервер отправляет промежуточные результаты по мере обработки аудио.
+
+    **Промежуточный результат (type: partial):**
+
+    ```json
+    {
+      "type": "partial",
+      "chunk_text": "мир",
+      "full_text": "привет мир"
+    }
+    ```
+
+    | Поле | Описание |
+    |------|----------|
+    | `chunk_text` | Текст, распознанный в текущем чанке |
+    | `full_text` | Полный накопленный текст транскрибации |
+
+    **Финальное сообщение (type: final):**
+
+    При завершении сессии (отправка пустого сообщения или закрытие соединения):
+
+    ```json
+    {
+      "type": "final",
+      "status": "completed",
+      "total_duration": 15.5
+    }
+    ```
+
+    | Поле | Описание |
+    |------|----------|
+    | `status` | Статус завершения (`completed`) |
+    | `total_duration` | Общая длительность обработанного аудио в секундах |
+  </Accordion>
+
+  <Accordion title="Обработка ошибок">
+    При возникновении ошибок сервер отправляет сообщение с описанием проблемы.
+
+    **Сообщение об ошибке (type: error):**
+
+    ```json
+    {
+      "type": "error",
+      "message": "ML service unavailable. Please try again later.",
+      "code": "ML_SERVICE_ERROR"
+    }
+    ```
+
+    **Пример ошибки авторизации:**
+
+    ```json
+    {
+      "type": "error",
+      "message": "Unauthorized: Invalid or missing token",
+      "code": "AUTH_ERROR"
+    }
+    ```
+
+    **Коды ошибок:**
+
+    | Код | Описание |
+    |-----|----------|
+    | `AUTH_ERROR` | Неверный или отсутствующий токен |
+    | `UNSUPPORTED_CODEC` | Неподдерживаемый аудиокодек |
+    | `DECODE_ERROR` | Ошибка декодирования аудио |
+    | `ML_SERVICE_ERROR` | Сервис распознавания недоступен |
+    | `PROCESSING_ERROR` | Ошибка при обработке аудио |
+    | `INTERNAL_ERROR` | Внутренняя ошибка сервера |
+
+    **Коды закрытия WebSocket:**
+
+    | Код | Описание |
+    |-----|----------|
+    | 4000 | Внутренняя ошибка |
+    | 4001 | Не авторизован |
+    | 4002 | Сервис ML недоступен |
+    | 4003 | Неподдерживаемый кодек |
+  </Accordion>
+
+  <Accordion title="Полный пример с микрофоном">
+    Пример потоковой транскрибации с микрофона в реальном времени.
+
+    ```python
+    import asyncio
+    import websockets
+    import pyaudio
+
+    API_URL = "wss://api.palatine.ru/api/v1/stream/asr"
+    TOKEN = "<YOUR_TOKEN>"
+
+    SAMPLE_RATE = 48000
+    CHANNELS = 1
+    CHUNK_SIZE = int(SAMPLE_RATE * 0.15 * 2)  # 150ms
+
+    async def transcribe_microphone():
+        url = f"{API_URL}?token={TOKEN}&sample_rate={SAMPLE_RATE}&codec=linear16"
+
+        # Инициализация PyAudio
+        p = pyaudio.PyAudio()
+        stream = p.open(
+            format=pyaudio.paInt16,
+            channels=CHANNELS,
+            rate=SAMPLE_RATE,
+            input=True,
+            frames_per_buffer=CHUNK_SIZE // 2
+        )
+
+        print("Начинаю запись... Нажмите Ctrl+C для остановки.")
+
+        try:
+            async with websockets.connect(url) as ws:
+                # Получаем конфигурацию
+                config = await ws.recv()
+                print(f"Подключено: {config}")
+
+                async def send_audio():
+                    while True:
+                        data = stream.read(CHUNK_SIZE // 2, exception_on_overflow=False)
+                        await ws.send(data)
+                        await asyncio.sleep(0.01)
+
+                async def receive_results():
+                    async for message in ws:
+                        print(message)
+
+                await asyncio.gather(
+                    send_audio(),
+                    receive_results()
+                )
+
+        except KeyboardInterrupt:
+            print("\nОстановка...")
+        finally:
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+
+    asyncio.run(transcribe_microphone())
+    ```
+
+    > **Зависимости** Для работы с микрофоном установите: `pip install pyaudio websockets`
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Поддерживаемые кодеки
+
+API поддерживает широкий спектр аудиокодеков. Для минимальной задержки рекомендуется использовать raw PCM форматы.
+
+<AccordionGroup>
+  <Accordion title="Рекомендуемые форматы (минимальная задержка)">
+    **Raw PCM форматы** — без накладных расходов на декодирование:
+
+    | Кодек | Описание | Размер (1 сек @ 48kHz mono) |
+    |-------|----------|---------------------|
+    | `linear16` | 16-bit signed PCM (little-endian) | 96 KB |
+    | `linear32` | 32-bit float PCM (little-endian) | 192 KB |
+
+    Эти форматы обрабатываются напрямую без декодирования, что обеспечивает минимальную задержку.
+  </Accordion>
+
+  <Accordion title="Сжатые форматы">
+    **Lossless:**
+    | Кодек | Описание |
+    |-------|----------|
+    | `flac` | Free Lossless Audio Codec |
+
+    **Современные кодеки:**
+    | Кодек | Описание |
+    |-------|----------|
+    | `opus` | Opus codec (raw frames) |
+    | `ogg-opus` | Opus в контейнере Ogg |
+    | `speex` | Speex speech codec |
+
+    **Lossy форматы:**
+    | Кодек | Описание |
+    |-------|----------|
+    | `mp3` | MPEG Audio Layer 3 |
+    | `mp2` | MPEG Audio Layer 2 |
+    | `aac` | Advanced Audio Coding |
+    | `m4a` | AAC в контейнере MP4 |
+
+    **Контейнерные форматы:**
+    | Кодек | Описание |
+    |-------|----------|
+    | `wav` | WAV container |
+    | `webm` | WebM container |
+    | `ogg` | Ogg container |
+    | `mp4` | MP4 container |
+  </Accordion>
+
+  <Accordion title="Телефонные кодеки">
+    Для интеграции с телефонными системами поддерживаются узкополосные кодеки:
+
+    | Кодек | Описание | Типичный bitrate |
+    |-------|----------|------------------|
+    | `alaw` | A-law G.711 | 64 kbps |
+    | `mulaw` | μ-law G.711 | 64 kbps |
+    | `amr-nb` | AMR narrowband | 4.75-12.2 kbps |
+    | `amr-wb` | AMR wideband | 6.6-23.85 kbps |
+    | `g729` | G.729 | 8 kbps |
+
+    <Note>
+    Телефонные кодеки оптимизированы для узкой полосы пропускания.
+    Рекомендуется использовать с `sample_rate=8000`.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Примеры интеграции с UI
+
+Мы подготовили готовые примеры для интеграции потоковой транскрибации в ваше веб-приложение.
+Выберите пример для вашего фреймворка:
+
+<AccordionGroup>
+  <Accordion title="Интеграция в браузер (JavaScript)">
+    Пример интеграции потоковой транскрибации в веб-приложение с использованием Web Audio API.
+
+    ```javascript
+    class PalatineASR {
+      constructor(token, sampleRate = 48000) {
+        this.token = token;
+        this.sampleRate = sampleRate;
+        this.ws = null;
+        this.audioContext = null;
+        this.mediaStream = null;
+        this.workletNode = null;
+        this.onResult = null;
+        this.onError = null;
+      }
+
+      async start() {
+        // Запрашиваем доступ к микрофону
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            sampleRate: this.sampleRate,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true
+          }
+        });
+
+        // Создаём AudioContext
+        this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
+
+        // Подключаемся к WebSocket
+        const url = `wss://api.palatine.ru/api/v1/stream/asr?token=${this.token}&sample_rate=${this.sampleRate}&codec=linear16`;
+        this.ws = new WebSocket(url);
+
+        this.ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'partial' && this.onResult) {
+            this.onResult(data);
+          } else if (data.type === 'error' && this.onError) {
+            this.onError(data);
+          }
+        };
+
+        this.ws.onerror = (error) => {
+          if (this.onError) this.onError({ message: 'WebSocket error', error });
+        };
+
+        // Ждём открытия соединения
+        await new Promise((resolve, reject) => {
+          this.ws.onopen = resolve;
+          this.ws.onerror = reject;
+        });
+
+        // Загружаем AudioWorklet для обработки аудио
+        await this.audioContext.audioWorklet.addModule(this.createWorkletURL());
+
+        // Создаём узлы обработки
+        const source = this.audioContext.createMediaStreamSource(this.mediaStream);
+        this.workletNode = new AudioWorkletNode(this.audioContext, 'pcm-processor');
+
+        this.workletNode.port.onmessage = (event) => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(event.data);
+          }
+        };
+
+        source.connect(this.workletNode);
+        this.workletNode.connect(this.audioContext.destination);
+      }
+
+      createWorkletURL() {
+        const bufferSize = Math.floor(this.sampleRate * 0.15); // 150ms буфер
+        const workletCode = `
+          class PCMProcessor extends AudioWorkletProcessor {
+            constructor() {
+              super();
+              this.buffer = [];
+              this.bufferSize = ${bufferSize};
+            }
+
+            process(inputs) {
+              const input = inputs[0];
+              if (input.length > 0) {
+                const samples = input[0];
+                for (let i = 0; i < samples.length; i++) {
+                  // Конвертируем float32 [-1, 1] в int16
+                  const s = Math.max(-1, Math.min(1, samples[i]));
+                  this.buffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+                }
+
+                while (this.buffer.length >= this.bufferSize) {
+                  const chunk = this.buffer.splice(0, this.bufferSize);
+                  const int16Array = new Int16Array(chunk);
+                  this.port.postMessage(int16Array.buffer);
+                }
+              }
+              return true;
+            }
+          }
+          registerProcessor('pcm-processor', PCMProcessor);
+        `;
+        const blob = new Blob([workletCode], { type: 'application/javascript' });
+        return URL.createObjectURL(blob);
+      }
+
+      stop() {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(new ArrayBuffer(0)); // Пустой буфер = конец потока
+          this.ws.close();
+        }
+        if (this.workletNode) {
+          this.workletNode.disconnect();
+        }
+        if (this.audioContext) {
+          this.audioContext.close();
+        }
+        if (this.mediaStream) {
+          this.mediaStream.getTracks().forEach(track => track.stop());
+        }
+      }
+    }
+
+    // Использование
+    const asr = new PalatineASR('<YOUR_TOKEN>');
+
+    asr.onResult = (data) => {
+      console.log('Распознано:', data.full_text);
+      document.getElementById('transcript').textContent = data.full_text;
+    };
+
+    asr.onError = (error) => {
+      console.error('Ошибка:', error);
+    };
+
+    // Запуск по кнопке
+    document.getElementById('startBtn').onclick = () => asr.start();
+    document.getElementById('stopBtn').onclick = () => asr.stop();
+    ```
+
+    **HTML-разметка:**
+
+    ```html
+    <button id="startBtn">Начать запись</button>
+    <button id="stopBtn">Остановить</button>
+    <div id="transcript"></div>
+    ```
+  </Accordion>
+
+  <Accordion title="React компонент">
+    Готовый React-компонент для потоковой транскрибации.
+
+    ```tsx
+    import { useState, useRef, useCallback } from 'react';
+
+    interface TranscriptResult {
+      type: 'partial' | 'final' | 'error';
+      chunk_text?: string;
+      full_text?: string;
+      message?: string;
+    }
+
+    const SAMPLE_RATE = 48000;
+
+    export function useStreamingASR(token: string) {
+      const [isRecording, setIsRecording] = useState(false);
+      const [transcript, setTranscript] = useState('');
+      const [error, setError] = useState<string | null>(null);
+
+      const wsRef = useRef<WebSocket | null>(null);
+      const audioContextRef = useRef<AudioContext | null>(null);
+      const streamRef = useRef<MediaStream | null>(null);
+
+      const start = useCallback(async () => {
+        try {
+          setError(null);
+          setTranscript('');
+
+          // Запрашиваем микрофон
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: { sampleRate: SAMPLE_RATE, channelCount: 1 }
+          });
+          streamRef.current = stream;
+
+          // Создаём AudioContext
+          const audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
+          audioContextRef.current = audioContext;
+
+          // WebSocket подключение
+          const ws = new WebSocket(
+            `wss://api.palatine.ru/api/v1/stream/asr?token=${token}&sample_rate=${SAMPLE_RATE}&codec=linear16`
+          );
+          wsRef.current = ws;
+
+          ws.onmessage = (event) => {
+            const data: TranscriptResult = JSON.parse(event.data);
+            if (data.type === 'partial' && data.full_text) {
+              setTranscript(data.full_text);
+            } else if (data.type === 'error') {
+              setError(data.message || 'Неизвестная ошибка');
+            }
+          };
+
+          await new Promise<void>((resolve, reject) => {
+            ws.onopen = () => resolve();
+            ws.onerror = () => reject(new Error('Ошибка подключения'));
+          });
+
+          // AudioWorklet для захвата PCM
+          const bufferSize = Math.floor(SAMPLE_RATE * 0.15); // 150ms
+          const workletCode = `
+            class PCMProcessor extends AudioWorkletProcessor {
+              constructor() {
+                super();
+                this.buffer = [];
+              }
+              process(inputs) {
+                const input = inputs[0];
+                if (input.length > 0) {
+                  for (const sample of input[0]) {
+                    const s = Math.max(-1, Math.min(1, sample));
+                    this.buffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+                  }
+                  if (this.buffer.length >= ${bufferSize}) {
+                    const chunk = this.buffer.splice(0, ${bufferSize});
+                    this.port.postMessage(new Int16Array(chunk).buffer);
+                  }
+                }
+                return true;
+              }
+            }
+            registerProcessor('pcm-processor', PCMProcessor);
+          `;
+          const blob = new Blob([workletCode], { type: 'application/javascript' });
+          await audioContext.audioWorklet.addModule(URL.createObjectURL(blob));
+
+          const source = audioContext.createMediaStreamSource(stream);
+          const worklet = new AudioWorkletNode(audioContext, 'pcm-processor');
+
+          worklet.port.onmessage = (e) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(e.data);
+            }
+          };
+
+          source.connect(worklet);
+          setIsRecording(true);
+
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Ошибка запуска');
+        }
+      }, [token]);
+
+      const stop = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(new ArrayBuffer(0));
+          wsRef.current.close();
+        }
+        audioContextRef.current?.close();
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        setIsRecording(false);
+      }, []);
+
+      return { isRecording, transcript, error, start, stop };
+    }
+
+    // Пример использования
+    export function TranscriptionWidget({ token }: { token: string }) {
+      const { isRecording, transcript, error, start, stop } = useStreamingASR(token);
+
+      return (
+        <div>
+          <button onClick={isRecording ? stop : start}>
+            {isRecording ? 'Остановить' : 'Начать запись'}
+          </button>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <p>{transcript || 'Говорите...'}</p>
+        </div>
+      );
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Vue 3 компонент">
+    Пример компонента для Vue 3 с Composition API.
+
+    ```vue
+    <template>
+      <div class="transcription-widget">
+        <button @click="toggle" :disabled="connecting">
+          {{ isRecording ? 'Остановить' : 'Начать запись' }}
+        </button>
+        <p v-if="error" class="error">{{ error }}</p>
+        <p class="transcript">{{ transcript || 'Говорите...' }}</p>
+      </div>
+    </template>
+
+    <script setup lang="ts">
+    import { ref, onUnmounted } from 'vue';
+
+    const props = defineProps<{ token: string }>();
+
+    const SAMPLE_RATE = 48000;
+    const BUFFER_SIZE = Math.floor(SAMPLE_RATE * 0.15); // 150ms
+
+    const isRecording = ref(false);
+    const connecting = ref(false);
+    const transcript = ref('');
+    const error = ref<string | null>(null);
+
+    let ws: WebSocket | null = null;
+    let audioContext: AudioContext | null = null;
+    let mediaStream: MediaStream | null = null;
+
+    async function start() {
+      try {
+        connecting.value = true;
+        error.value = null;
+        transcript.value = '';
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: { sampleRate: SAMPLE_RATE, channelCount: 1 }
+        });
+
+        audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
+
+        ws = new WebSocket(
+          `wss://api.palatine.ru/api/v1/stream/asr?token=${props.token}&sample_rate=${SAMPLE_RATE}&codec=linear16`
+        );
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'partial') {
+            transcript.value = data.full_text;
+          } else if (data.type === 'error') {
+            error.value = data.message;
+          }
+        };
+
+        await new Promise<void>((resolve, reject) => {
+          ws!.onopen = () => resolve();
+          ws!.onerror = () => reject(new Error('Ошибка подключения'));
+        });
+
+        const workletCode = `
+          class PCMProcessor extends AudioWorkletProcessor {
+            constructor() { super(); this.buffer = []; }
+            process(inputs) {
+              const input = inputs[0];
+              if (input.length > 0) {
+                for (const s of input[0]) {
+                  const v = Math.max(-1, Math.min(1, s));
+                  this.buffer.push(v < 0 ? v * 0x8000 : v * 0x7FFF);
+                }
+                if (this.buffer.length >= ${BUFFER_SIZE}) {
+                  this.port.postMessage(new Int16Array(this.buffer.splice(0, ${BUFFER_SIZE})).buffer);
+                }
+              }
+              return true;
+            }
+          }
+          registerProcessor('pcm-processor', PCMProcessor);
+        `;
+        const blob = new Blob([workletCode], { type: 'application/javascript' });
+        await audioContext.audioWorklet.addModule(URL.createObjectURL(blob));
+
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        const worklet = new AudioWorkletNode(audioContext, 'pcm-processor');
+
+        worklet.port.onmessage = (e) => {
+          if (ws?.readyState === WebSocket.OPEN) ws.send(e.data);
+        };
+
+        source.connect(worklet);
+        isRecording.value = true;
+
+      } catch (err) {
+        error.value = err instanceof Error ? err.message : 'Ошибка';
+      } finally {
+        connecting.value = false;
+      }
+    }
+
+    function stop() {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(new ArrayBuffer(0));
+        ws.close();
+      }
+      audioContext?.close();
+      mediaStream?.getTracks().forEach(t => t.stop());
+      isRecording.value = false;
+    }
+
+    function toggle() {
+      isRecording.value ? stop() : start();
+    }
+
+    onUnmounted(() => stop());
+    </script>
+
+    <style scoped>
+    .error { color: red; }
+    .transcript { min-height: 100px; padding: 1rem; background: #f5f5f5; }
+    </style>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---

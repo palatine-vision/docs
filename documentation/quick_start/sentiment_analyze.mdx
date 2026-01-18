@@ -6,99 +6,153 @@ Palatine Speech позволяет определить эмоциональну
 Сервис агрегирует вероятности по классам тональности (Very Negative, Negative, Neutral, Positive, Very Positive) и выдаёт результат в удобном JSON.
 Классы всегда отсортированы по убыванию вероятности: первый элемент — наиболее вероятная тональность.
 
+<Steps>
+  <Step title="Создание задачи">POST /analyze_file — отправьте аудио/видео файл</Step>
+  <Step title="Получение task_id">API вернёт task_id для отслеживания</Step>
+  <Step title="Polling статуса">GET /task_status/{task_id} — опрашивайте до получения результата</Step>
+  <Step title="Завершение">POST /task_done/{task_id} — освободите ресурсы</Step>
+</Steps>
+
+---
+
 ### Анализ тональности через polling API
 
-> **Важно** Все запросы выполняются по защищённым URL.
-Для большинства методов требуется авторизация через токен, передаваемый в заголовке:
-```http
-Authorization: Bearer <ваш_токен>
-```
+<Note>
+Все запросы требуют авторизации через токен в заголовке: `Authorization: Bearer <ваш_токен>`
+</Note>
 
 <AccordionGroup>
   <Accordion title="Создание задачи">
-    Отправьте файл или чистый текст на эндпоинт `POST /sentiment_analysis/analyze_file`.
-    Для аудио/видео используйте multipart загрузку, для текста — параметр `data`.
+    Отправьте аудио/видео файл на эндпоинт `POST /sentiment_analysis/analyze_file`.
 
-        ```python
-        import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-        API_URL = "https://api.palatine.ru/api/v1/sentiment_analysis/analyze_file"
-        TOKEN = "<YOUR_TOKEN>"
-        headers = {"Authorization": f"Bearer {TOKEN}"}
+API_URL = "https://api.palatine.ru/api/v1/sentiment_analysis/analyze_file"
+TOKEN = "<YOUR_TOKEN>"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-        files = {"file": open("call.mp3", "rb")}
-        response = requests.post(API_URL, files=files, headers=headers)
+files = {"file": open("call.mp3", "rb")}
+response = requests.post(API_URL, files=files, headers=headers)
 
-        print(response.json())
-        ```
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/sentiment_analysis/analyze_file" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@call.mp3"
+```
+  </Tab>
+</Tabs>
 
-        Пример ответа:
-
-        ```json
-        {
-          "status": "scheduled",
-          "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        }
-        ```
+Пример ответа:
+```json
+{
+  "status": "scheduled",
+  "task_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
   </Accordion>
 
   <Accordion title="Проверка статуса задачи">
 
-    Получить статус асинхронной задачи и результат анализа.
+Получить статус асинхронной задачи и результат анализа.
 
-    ```python
-    import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    API_URL = f"https://api.palatine.ru/api/v1/sentiment_analysis/task_status/{task_id}"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/sentiment_analysis/task_status/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.get(API_URL, headers=headers)
-    print(response.json())
-    ```
-      Всего задачи имеют 3 статуса:
-      - "success": задача выполнена успешно
-      - "pending": задача ещё в процессе выполнения
-      - "error": при выполнении задачи произошла ошибка
+response = requests.get(API_URL, headers=headers)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl "https://api.palatine.ru/api/v1/sentiment_analysis/task_status/{task_id}" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+  </Tab>
+</Tabs>
 
-      Пример успешного ответа с результатом анализа:
+**Статусы задачи:**
+- `success` — задача выполнена успешно
+- `pending` — задача ещё в процессе выполнения
+- `error` — при выполнении задачи произошла ошибка
 
-      ```json
-      {
-        "id": "b9fcc4dd-0fb8-4900-b7f7-e6ac2a90cbe5",
-        "created_at": "2025-08-26T20:47:17.856937Z",
-        "data": {
-          "sentiment": [
-            {"label": "Very Positive", "score": 0.85},
-            {"label": "Positive", "score": 0.08},
-            {"label": "Neutral", "score": 0.04},
-            {"label": "Negative", "score": 0.02},
-            {"label": "Very Negative", "score": 0.01}
-          ]
-        },
-        "status": "success",
-        "error": null
-      }
-      ```
-      Список `sentiment` отсортирован по убыванию вероятности, поэтому первый элемент — наиболее вероятная тональность.
+Пример успешного ответа:
+```json
+{
+  "id": "b9fcc4dd-0fb8-4900-b7f7-e6ac2a90cbe5",
+  "created_at": "2025-08-26T20:47:17.856937Z",
+  "data": {
+    "sentiment": [
+      {"label": "Very Positive", "score": 0.85},
+      {"label": "Positive", "score": 0.08},
+      {"label": "Neutral", "score": 0.04},
+      {"label": "Negative", "score": 0.02},
+      {"label": "Very Negative", "score": 0.01}
+    ]
+  },
+  "status": "success",
+  "error": null
+}
+```
+
+<Tip>
+Список `sentiment` отсортирован по убыванию вероятности — первый элемент соответствует наиболее вероятной тональности. Значения `score` представляют уверенность модели для каждого класса.
+</Tip>
   </Accordion>
 
   <Accordion title="Завершение задачи">
-    После получения результата пометьте задачу завершённой, чтобы освободить ресурсы.
+После получения результата пометьте задачу завершённой, чтобы освободить ресурсы.
 
-    ```python
-    import requests
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
 
-    task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    API_URL = f"https://api.palatine.ru/api/v1/sentiment_analysis/task_done/{task_id}"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
+task_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+API_URL = f"https://api.palatine.ru/api/v1/sentiment_analysis/task_done/{task_id}"
+headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.post(API_URL, headers=headers)
-    print(response.json())
-    ```
+response = requests.post(API_URL, headers=headers)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/sentiment_analysis/task_done/{task_id}" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+  </Tab>
+</Tabs>
+
+  </Accordion>
+
+  <Accordion title="Обработка ошибок">
+
+| HTTP код | Описание | Решение |
+|----------|----------|---------|
+| 401 | Неверный или отсутствующий токен | Проверьте токен авторизации |
+| 404 | Задача не найдена | Проверьте task_id или создайте новую задачу |
+| 500 | Внутренняя ошибка сервера | Повторите запрос или обратитесь в поддержку |
+
+**Ошибки в поле `error` ответа:**
+| Сообщение | Причина | Решение |
+|-----------|---------|---------|
+| No recognizable speech | В аудио нет распознаваемой речи | Используйте файл с чёткой речью |
+| Not enough balance | Недостаточно средств на балансе | Пополните баланс |
 
   </Accordion>
 </AccordionGroup>
-
 
 ---
