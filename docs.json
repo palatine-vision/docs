@@ -46,7 +46,8 @@
               "documentation/quick_start/transcription",
               "documentation/quick_start/streaming",
               "documentation/quick_start/sentiment_analyze",
-              "documentation/quick_start/summarization"
+              "documentation/quick_start/summarization",
+              "documentation/quick_start/chat_completions"
             ]
           },
           {
@@ -104,6 +105,20 @@
               "api-reference/ai-service/summarize-text",
               "api-reference/ai-service/task-done",
               "api-reference/ai-service/task-status"
+            ]
+          },
+          {
+            "group": "Chat Completions",
+            "pages": [
+              "api-reference/chat-completions/list-models",
+              "api-reference/chat-completions/chat-completions"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/health",
+              "api-reference/root"
             ]
           }
         ]

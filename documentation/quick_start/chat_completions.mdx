@@ -1,0 +1,370 @@
+---
+title: 'Чат с LLM (OpenAI-совместимый)'
+---
+
+Palatine LLM API предоставляет OpenAI-совместимый интерфейс для работы с большими языковыми моделями.
+Вы можете использовать стандартный OpenAI SDK или любой HTTP-клиент для отправки запросов.
+
+<Steps>
+  <Step title="Авторизация">Получите API-токен в личном кабинете Palatine Speech</Step>
+  <Step title="Выбор модели">GET /models — получите список доступных моделей</Step>
+  <Step title="Отправка запроса">POST /chat/completions — отправьте сообщения и получите ответ</Step>
+</Steps>
+
+<Tip>
+Параметр `thinking` включает расширенный режим рассуждений для сложных задач. Модель потратит больше времени на анализ, но выдаст более качественный результат.
+</Tip>
+
+---
+
+### Использование через OpenAI SDK
+
+Самый простой способ интеграции — использовать официальный OpenAI Python SDK, указав базовый URL Palatine API.
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.palatine.ru/api/llm/v1",
+    api_key="<YOUR_TOKEN>"
+)
+
+# Получение списка моделей
+models = client.models.list()
+for model in models.data:
+    print(model.id)
+
+# Chat completion
+response = client.chat.completions.create(
+    model="palatine:8b",
+    messages=[
+        {"role": "system", "content": "Ты — полезный ассистент."},
+        {"role": "user", "content": "Объясни, что такое машинное обучение."}
+    ],
+    temperature=0.7,
+    max_tokens=1024
+)
+
+print(response.choices[0].message.content)
+```
+
+#### Структурированный вывод (Pydantic)
+
+Для получения ответа в виде структурированного объекта используйте `response_format` с JSON Schema или Pydantic-моделью.
+
+```python
+from openai import OpenAI
+from pydantic import BaseModel
+
+client = OpenAI(
+    base_url="https://api.palatine.ru/api/llm/v1",
+    api_key="<YOUR_TOKEN>"
+)
+
+class ProgrammingLanguage(BaseModel):
+    name: str
+    year: int
+    creator: str
+
+class LanguageList(BaseModel):
+    languages: list[ProgrammingLanguage]
+
+response = client.beta.chat.completions.parse(
+    model="palatine:8b",
+    messages=[
+        {"role": "user", "content": "Перечисли 3 популярных языка программирования"}
+    ],
+    response_format=LanguageList
+)
+
+result = response.choices[0].message.parsed
+for lang in result.languages:
+    print(f"{lang.name} ({lang.year}) — {lang.creator}")
+```
+
+---
+
+### Подробное описание API
+
+<Note>
+Все запросы требуют авторизации через токен в заголовке: `Authorization: Bearer <ваш_токен>`
+</Note>
+
+<AccordionGroup>
+  <Accordion title="Получение списка моделей">
+Запросите список доступных LLM моделей.
+
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/llm/v1/models"
+TOKEN = "<YOUR_TOKEN>"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+response = requests.get(API_URL, headers=headers)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl "https://api.palatine.ru/api/llm/v1/models" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+  </Tab>
+</Tabs>
+
+Пример ответа:
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "palatine:8b",
+      "object": "model",
+      "created": 1700000000,
+      "owned_by": "library"
+    },
+    {
+      "id": "palatine:32b",
+      "object": "model",
+      "created": 1700000000,
+      "owned_by": "library"
+    }
+  ]
+}
+```
+
+<Tip>
+Этот эндпоинт не тарифицируется — можно вызывать без списания токенов.
+</Tip>
+  </Accordion>
+
+  <Accordion title="Отправка сообщений (Chat Completions)">
+Отправьте историю диалога и получите ответ от модели.
+
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/llm/v1/chat/completions"
+TOKEN = "<YOUR_TOKEN>"
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+payload = {
+    "model": "palatine:8b",
+    "messages": [
+        {"role": "system", "content": "Ты — эксперт по Python."},
+        {"role": "user", "content": "Как сортировать список словарей по ключу?"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 512
+}
+
+response = requests.post(API_URL, headers=headers, json=payload)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "palatine:8b",
+    "messages": [
+      {"role": "system", "content": "Ты — эксперт по Python."},
+      {"role": "user", "content": "Как сортировать список словарей по ключу?"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 512
+  }'
+```
+  </Tab>
+</Tabs>
+
+Пример ответа:
+```json
+{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1700000000,
+  "model": "palatine:8b",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Для сортировки списка словарей по ключу используйте функцию sorted() с параметром key:\n\n```python\ndata = [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]\nsorted_data = sorted(data, key=lambda x: x['age'])\n```"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 87,
+    "total_tokens": 129
+  }
+}
+```
+  </Accordion>
+
+  <Accordion title="Режим структурированного вывода (JSON)">
+Для получения ответа в формате JSON используйте параметр `response_format`.
+
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/llm/v1/chat/completions"
+TOKEN = "<YOUR_TOKEN>"
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+payload = {
+    "model": "palatine:8b",
+    "messages": [
+        {"role": "user", "content": "Перечисли 3 языка программирования с их годом создания"}
+    ],
+    "response_format": {"type": "json_object"},
+    "temperature": 0.5
+}
+
+response = requests.post(API_URL, headers=headers, json=payload)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "palatine:8b",
+    "messages": [
+      {"role": "user", "content": "Перечисли 3 языка программирования с их годом создания"}
+    ],
+    "response_format": {"type": "json_object"},
+    "temperature": 0.5
+  }'
+```
+  </Tab>
+</Tabs>
+
+<Tip>
+Для более строгого контроля над схемой JSON используйте `response_format` с типом `json_schema` и указанием JSON Schema.
+</Tip>
+  </Accordion>
+
+  <Accordion title="Расширенный режим рассуждений (Thinking)">
+Включите параметр `thinking` для сложных задач, требующих глубокого анализа.
+
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/llm/v1/chat/completions"
+TOKEN = "<YOUR_TOKEN>"
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+payload = {
+    "model": "palatine:8b",
+    "messages": [
+        {"role": "user", "content": "Реши задачу: у фермера 17 овец. Все, кроме 9, убежали. Сколько осталось?"}
+    ],
+    "thinking": True,
+    "temperature": 0.3
+}
+
+response = requests.post(API_URL, headers=headers, json=payload)
+print(response.json())
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "palatine:8b",
+    "messages": [
+      {"role": "user", "content": "Реши задачу: у фермера 17 овец. Все, кроме 9, убежали. Сколько осталось?"}
+    ],
+    "thinking": true,
+    "temperature": 0.3
+  }'
+```
+  </Tab>
+</Tabs>
+
+<Warning>
+Режим `thinking` увеличивает время ответа и расход токенов, но повышает качество для задач с логическими рассуждениями.
+</Warning>
+  </Accordion>
+
+  <Accordion title="Параметры запроса">
+
+| Параметр | Тип | Обязательный | Описание |
+|----------|-----|--------------|----------|
+| `model` | string | Да | Идентификатор модели (например, `palatine:8b`) |
+| `messages` | array | Да | Массив сообщений диалога |
+| `temperature` | float | Нет | Температура сэмплирования (0-2). По умолчанию: 1.0 |
+| `max_tokens` | int | Нет | Максимальное количество токенов в ответе |
+| `thinking` | bool | Нет | Режим расширенных рассуждений. По умолчанию: false |
+| `response_format` | object | Нет | Формат ответа (`{"type": "json_object"}`) |
+| `format` | object | Нет | Схема структурированного вывода (Ollama-формат) |
+
+**Роли сообщений:**
+| Роль | Описание |
+|------|----------|
+| `system` | Системные инструкции для модели |
+| `user` | Сообщение пользователя |
+| `assistant` | Предыдущие ответы модели (для контекста диалога) |
+
+  </Accordion>
+
+  <Accordion title="Обработка ошибок">
+
+| HTTP код | Описание | Решение |
+|----------|----------|---------|
+| 401 | Неверный или отсутствующий токен | Проверьте токен авторизации |
+| 402 | Недостаточно средств на балансе | Пополните баланс |
+| 404 | Модель не найдена | Проверьте название модели через GET /models |
+| 502 | Ошибка LLM сервиса | Повторите запрос позже |
+| 504 | Таймаут LLM сервиса | Уменьшите `max_tokens` или повторите запрос |
+
+Пример ответа с ошибкой:
+```json
+{
+  "detail": "Model 'unknown-model' not found"
+}
+```
+
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Тарификация
+
+Входящие и исходящие токены тарифицируются отдельно:
+- **Входящие токены** (`prompt_tokens`) — токены в вашем запросе (системный промпт + история диалога + текущее сообщение)
+- **Исходящие токены** (`completion_tokens`) — токены в ответе модели
+
+Информация о расходе токенов возвращается в поле `usage` каждого ответа.
+
+<Note>
+Эндпоинт GET /models не тарифицируется.
+</Note>
