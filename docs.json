@@ -113,13 +113,6 @@
               "api-reference/chat-completions/list-models",
               "api-reference/chat-completions/chat-completions"
             ]
-          },
-          {
-            "group": "API Reference",
-            "pages": [
-              "api-reference/health",
-              "api-reference/root"
-            ]
           }
         ]
       }
