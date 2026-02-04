@@ -36,7 +36,7 @@ for model in models.data:
 
 # Chat completion
 response = client.chat.completions.create(
-    model="palatine:8b",
+    model="palatine:m",
     messages=[
         {"role": "system", "content": "Ты — полезный ассистент."},
         {"role": "user", "content": "Объясни, что такое машинное обучение."}
@@ -70,7 +70,7 @@ class LanguageList(BaseModel):
     languages: list[ProgrammingLanguage]
 
 response = client.beta.chat.completions.parse(
-    model="palatine:8b",
+    model="palatine:m",
     messages=[
         {"role": "user", "content": "Перечисли 3 популярных языка программирования"}
     ],
@@ -121,7 +121,7 @@ curl "https://api.palatine.ru/api/llm/v1/models" \
   "object": "list",
   "data": [
     {
-      "id": "palatine:8b",
+      "id": "palatine:m",
       "object": "model",
       "created": 1700000000,
       "owned_by": "library"
@@ -157,7 +157,7 @@ headers = {
 }
 
 payload = {
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
         {"role": "system", "content": "Ты — эксперт по Python."},
         {"role": "user", "content": "Как сортировать список словарей по ключу?"}
@@ -176,7 +176,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
       {"role": "system", "content": "Ты — эксперт по Python."},
       {"role": "user", "content": "Как сортировать список словарей по ключу?"}
@@ -194,7 +194,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
   "id": "chatcmpl-abc123",
   "object": "chat.completion",
   "created": 1700000000,
-  "model": "palatine:8b",
+  "model": "palatine:m",
   "choices": [
     {
       "index": 0,
@@ -230,7 +230,7 @@ headers = {
 }
 
 payload = {
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
         {"role": "user", "content": "Перечисли 3 языка программирования с их годом создания"}
     ],
@@ -248,7 +248,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
       {"role": "user", "content": "Перечисли 3 языка программирования с их годом создания"}
     ],
@@ -280,7 +280,7 @@ headers = {
 }
 
 payload = {
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
         {"role": "user", "content": "Реши задачу: у фермера 17 овец. Все, кроме 9, убежали. Сколько осталось?"}
     ],
@@ -298,7 +298,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "palatine:8b",
+    "model": "palatine:m",
     "messages": [
       {"role": "user", "content": "Реши задачу: у фермера 17 овец. Все, кроме 9, убежали. Сколько осталось?"}
     ],
@@ -318,7 +318,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
 
 | Параметр | Тип | Обязательный | Описание |
 |----------|-----|--------------|----------|
-| `model` | string | Да | Идентификатор модели (например, `palatine:8b`) |
+| `model` | string | Да | Идентификатор модели (например, `palatine:m`) |
 | `messages` | array | Да | Массив сообщений диалога |
 | `temperature` | float | Нет | Температура сэмплирования (0-2). По умолчанию: 1.0 |
 | `max_tokens` | int | Нет | Максимальное количество токенов в ответе |
