@@ -3,11 +3,6 @@
   "theme": "aspen",
   "name": "Palatine Speech",
   "description": "Speech-to-Text API, диаризация, распознавание речи, speaker diarization, cloud AI, REST API, gRPC, WebSocket, ASR, NLP, Palatine",
-  "banner": {
-    "content": "⚠️ Плановые работы: суммаризация и LLM-чат временно недоступны. Транскрипция, диаризация и анализ тональности работают штатно.",
-    "dismissible": true,
-    "type": "warning"
-  },
   "colors": {
     "primary": "#350938",
     "light": "#EA4881",
