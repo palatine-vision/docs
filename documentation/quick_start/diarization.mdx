@@ -1,0 +1,166 @@
+---
+title: 'Разметка говорящих'
+---
+
+Сервис умеет **размечать говорящих** (диаризация) и возвращать **транскрипцию, где
+каждое слово привязано к спикеру** (combined-режим). Ниже — когда что использовать
+и как читать результат.
+
+## Модели диаризации
+
+| Модель | Когда использовать | Число говорящих |
+|--------|--------------------|-----------------|
+| `palatine_diarize` (по умолчанию) | Диалоги и короткие записи | до 4 |
+| `palatine_diarize_multi` | Созвоны, совещания, много участников | 8–12+ |
+
+<Note>
+Модель можно не указывать — тогда применяется `palatine_diarize`. Для записей с
+большим числом участников выбирайте `palatine_diarize_multi` и по возможности
+передавайте подсказку числа говорящих (`num_speakers`) — это стабилизирует разметку.
+</Note>
+
+Подсказки числа говорящих (все опциональны): `num_speakers` — точное число, если
+известно; `min_speakers` / `max_speakers` — границы.
+
+<Warning>
+У модели по умолчанию (`palatine_diarize`) жёсткий предел — **4 говорящих**. Запрос с
+`max_speakers` больше 4 к ней вернёт `422`. Для большего числа участников используйте
+`palatine_diarize_multi`.
+</Warning>
+
+## Диаризация (только спикеры)
+
+Разметка говорящих без транскрипции — эндпоинт `/diarization/do_diarize`,
+асинхронный (task_id → polling).
+
+<Steps>
+  <Step title="Отправить файл">
+    <Tabs>
+      <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/diarization/do_diarize?model=palatine_diarize_multi&num_speakers=8" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@meeting.mp3"
+# → {"status": "scheduled", "task_id": "..."}
+```
+      </Tab>
+      <Tab title="Python">
+```python
+import requests
+
+resp = requests.post(
+    "https://api.palatine.ru/api/v1/diarization/do_diarize",
+    params={"model": "palatine_diarize_multi", "num_speakers": 8},
+    headers={"Authorization": "Bearer <YOUR_TOKEN>"},
+    files={"file": open("meeting.mp3", "rb")},
+)
+task_id = resp.json()["task_id"]
+```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Получить результат">
+```bash
+curl "https://api.palatine.ru/api/v1/diarization/task_status/<task_id>" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+В `data.segments` — интервалы речи с меткой говорящего (`SPEAKER_00`, `SPEAKER_01`, …).
+Флаг `?merge_segments=true` схлопывает соседние сегменты одного говорящего.
+  </Step>
+</Steps>
+
+Файл по ссылке (pre-signed S3 и т.п.) — те же параметры на `/diarization/do_diarize_by_url`
+(передайте `source_url` в теле запроса).
+
+## Транскрипция со спикерами (combined)
+
+Чтобы получить **текст + говорящих в одном ответе**, добавьте параметр
+`diarization_model` к обычной транскрипции на `/transcribe/do_transcribe`.
+
+<Tabs>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?diarization_model=palatine_diarize_multi&num_speakers=8" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@meeting.mp3"
+# → {"status": "scheduled", "task_id": "..."}
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import requests
+
+resp = requests.post(
+    "https://api.palatine.ru/api/v1/transcribe/do_transcribe",
+    params={"diarization_model": "palatine_diarize_multi", "num_speakers": 8},
+    headers={"Authorization": "Bearer <YOUR_TOKEN>"},
+    files={"file": open("meeting.mp3", "rb")},
+)
+task_id = resp.json()["task_id"]
+```
+  </Tab>
+</Tabs>
+
+Значения `diarization_model`: `auto` (сервис выберет сам), `palatine_diarize` (до 4),
+`palatine_diarize_multi` (много участников). **Без** параметра эндпоинт работает как
+обычная транскрипция — поведение существующих интеграций не меняется.
+
+<Warning>
+Combined-режим тарифицируется как **две операции**: транскрипция **и** диаризация.
+</Warning>
+
+### Формат ответа
+
+`task_status` возвращает транскрипцию со спикерами:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "text": "Добрый день, коллеги. ...",
+    "language": "ru",
+    "duration": 612.4,
+    "segments": [
+      { "id": 0, "speaker": "SPEAKER_00", "start": 0.6, "end": 8.9, "text": "Добрый день, коллеги." }
+    ],
+    "words": [
+      { "word": " Добрый", "start": 0.6, "end": 1.1, "speaker": "SPEAKER_00",
+        "confidence": 0.98, "speaker_confidence": 0.95 }
+    ],
+    "models": {
+      "transcription": "palatine_large_highspeed",
+      "diarization_requested": "palatine_diarize_multi",
+      "diarization_resolved": "palatine_diarize_multi"
+    },
+    "warnings": []
+  }
+}
+```
+
+| Поле | Значение |
+|------|----------|
+| `segments[]` | Реплики, перегруппированные по смене говорящего |
+| `words[]` | Слова с привязкой к говорящему |
+| `words[].confidence` | Уверенность распознавания слова, `[0, 1]` |
+| `words[].speaker_confidence` | Уверенность привязки к говорящему, `[0, 1]` |
+| `models.diarization_resolved` | Фактически применённая модель диаризации |
+| `warnings[]` | Предупреждения обработки (участки без надёжной привязки и т.п.) |
+
+## OpenAI-совместимый эндпоинт
+
+На `/audio/transcriptions` (синхронный ответ) combined включается тем же параметром
+`diarization_model`, а формат ответа со спикерами — `diarized_json`:
+
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@call.mp3" \
+  -F "diarization_model=palatine_diarize_multi" \
+  -F "num_speakers=5" \
+  -F "response_format=diarized_json"
+```
+
+<Note>
+Синхронный combined-путь ограничен по длительности аудио (до 30 минут) — для более
+длинных записей используйте асинхронный `/transcribe/do_transcribe`.
+</Note>
