@@ -114,6 +114,12 @@
               "api-reference/chat-completions/list-models",
               "api-reference/chat-completions/chat-completions"
             ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "api-reference/account/balance"
+            ]
           }
         ]
       }
