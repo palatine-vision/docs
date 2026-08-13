@@ -3,27 +3,42 @@
 
 > Документация Palatine Speech — это комплексный справочник по облачной платформе обработки речи от Palatine. Платформа предоставляет API для автоматического распознавания речи (speech‑to‑text), транскрибации аудио и видео с таймкодами, сегментации по спикерам (диаризация), генерации субтитров и перевода аудио в текст. Сервис поддерживает множество языков и форматов файлов, что делает его универсальным инструментом для корпоративных и коммерческих приложений.
 
-Платформа Palatine Speech интегрируется через OpenAI‑совместимый API и поддерживает асинхронный polling API для работы с длинными аудиофайлами. Документация содержит пошаговые инструкции, примеры кода на Python и рекомендации по оптимальной работе с сервисом.
+Помимо распознавания речи платформа определяет тональность речи, готовит конспекты записей и текстов и предоставляет OpenAI‑совместимый чат с LLM. Palatine Speech интегрируется через OpenAI‑совместимый API и поддерживает асинхронный polling API для работы с длинными аудиофайлами. Документация содержит пошаговые инструкции, примеры кода на Python и рекомендации по оптимальной работе с сервисом.
 
 ## Руководства
 
-- [Использование Palatine Speech API](https://docs.speech.palatine.ru/documentation/quick_start/quick_start): пошаговый «быстрый старт» по использованию API. Охватывает отправку аудиофайлов на транскрибацию или диаризацию через `api.palatine.ru/api/v1`, выбор формата ответа (json, verbose_json, text, srt, vtt), получение результата, примеры кода и работу с polling API.
+- [Транскрибация и диаризация](https://docs.speech.palatine.ru/documentation/quick_start/transcription): пошаговый «быстрый старт» по API. Охватывает отправку аудио и видео на транскрибацию через `api.palatine.ru/api/v1`, выбор формата ответа (json, verbose_json, text, srt, vtt), получение результата и работу с polling API.
+- [Потоковая транскрибация](https://docs.speech.palatine.ru/documentation/quick_start/streaming): распознавание в реальном времени через WebSocket — результаты приходят по мере обработки аудио.
+- [Разметка говорящих](https://docs.speech.palatine.ru/documentation/quick_start/diarization): когда использовать диаризацию, а когда combined‑режим с привязкой каждого слова к спикеру, и как читать результат.
+- [Анализ тональности речи](https://docs.speech.palatine.ru/documentation/quick_start/sentiment_analyze): определение эмоциональной окраски речи с агрегацией вероятностей по классам (Very Negative … Very Positive).
+- [Суммаризация встреч и текстов](https://docs.speech.palatine.ru/documentation/quick_start/summarization): конспект записи встречи или готового текста по сценарию `meeting_summary` либо по своему `prompt`.
+- [Чат с LLM (OpenAI‑совместимый)](https://docs.speech.palatine.ru/documentation/quick_start/chat_completions): работа с большими языковыми моделями через стандартный OpenAI SDK или любой HTTP‑клиент.
 
 ## Техническая информация
 
-- [Поддерживаемые языки](https://docs.speech.palatine.ru/documentation/technical_information/languages): таблица с кодами языков (например, en, ru, fr) и их русскими названиями. Раздел описывает, как явно указать язык для транскрибации или доверить определение языку автоматически.
+- [Поддерживаемые языки](https://docs.speech.palatine.ru/documentation/technical_information/supported_languages): таблица с кодами языков (например, en, ru, fr) и их русскими названиями. Раздел описывает, как явно указать язык для транскрибации или доверить определение языку автоматически.
 - [Поддерживаемые форматы аудио и видео](https://docs.speech.palatine.ru/documentation/technical_information/supported_files): детальный перечень MIME‑типов аудио (AIFF, FLAC, M4A/AAC, MP3, OGG, Opus, WAV и др.) и видеоформатов (AVI, MKV, MOV, MP4), из которых извлекается аудио для распознавания.
 - [Polling API: принцип работы](https://docs.speech.palatine.ru/documentation/technical_information/polling_principles): описание асинхронного механизма обработки задач. Показывает, как получить `task_id`, опрашивать сервер о статусе задачи, дождаться результата и корректно завершить процесс.
-- [API‑справочник Palatine Speech](https://docs.speech.palatine.ru/api-reference): полный список всех доступных REST‑эндпоинтов для транскрибации, диаризации и создания субтитров, включая параметры запросов и примеры использования.
 
 ## API
 
 Эндпоинты Palatine Speech API:
 
- - [POST `/transcribe/do_transcribe`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/transcribe): преобразует аудио в текст (AI‑распознавание речи) и возвращает идентификатор асинхронной задачиhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/transcribe#:~:text=cURL.
- - [POST `/transcribe/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-done): отмечает задачу транскрипции как завершённую и удаляет её данные из кэшаhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-done#:~:text=cURL.
- - [GET `/transcribe/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-status): возвращает текущий статус и результат задачи транскрипции при готовностиhttps://docs.speech.palatine.ru/api-reference/transcribe/transcribe-polling-api/task-status#:~:text=Task%20Status.
- - [POST `/audio/transcriptions`](https://docs.speech.palatine.ru/api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe): совместимый с OpenAI Audio API эндпоинт для транскрибации аудио и видеоhttps://docs.speech.palatine.ru/api-reference/transcribe_openai/transcribe-openai-api/openai-transcribe#:~:text=Openai%20Transcribe.
- - [POST `/diarization/do_diarize`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/diarize): разделяет аудио на сегменты по спикерам и возвращает идентификатор асинхронной задачиhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/diarize#:~:text=Diarize.
- - [POST `/diarization/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-done): отмечает задачу диаризации как завершённой и удаляет её данные из кэшаhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-done#:~:text=Task%20Done.
- - [GET `/diarization/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-status): возвращает текущий статус и результат задачи диаризацииhttps://docs.speech.palatine.ru/api-reference/diarization/diarization-polling-api/task-status#:~:text=Task%20Status.
+- [POST `/api/v1/transcribe/do_transcribe`](https://docs.speech.palatine.ru/api-reference/transcribe-polling-api/transcribe): преобразует аудио в текст (AI‑распознавание речи) и возвращает идентификатор асинхронной задачи.
+- [GET `/api/v1/transcribe/download_as_file/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe-polling-api/download-as-file): выгружает результат транскрибации файлом в формате srt, vtt, txt, csv или xlsx.
+- [POST `/api/v1/transcribe/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe-polling-api/task-done): помечает задачу транскрибации завершённой и удаляет её из списка активных.
+- [GET `/api/v1/transcribe/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/transcribe-polling-api/task-status): возвращает состояние задачи транскрибации и результат при его готовности.
+- [POST `/api/v1/audio/transcriptions`](https://docs.speech.palatine.ru/api-reference/transcribe-openai-api/openai-transcribe): совместимый с OpenAI Audio API эндпоинт для транскрибации аудио и видео.
+- [POST `/api/v1/diarization/do_diarize`](https://docs.speech.palatine.ru/api-reference/diarization-polling-api/diarize): разделяет аудио на сегменты по спикерам с временными метками и возвращает идентификатор асинхронной задачи.
+- [POST `/api/v1/diarization/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization-polling-api/task-done): помечает задачу диаризации завершённой и удаляет её данные из кэша.
+- [GET `/api/v1/diarization/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/diarization-polling-api/task-status): возвращает состояние задачи диаризации и её результат при готовности.
+- [POST `/api/v1/sentiment_analysis/analyze_file`](https://docs.speech.palatine.ru/api-reference/sentiment-analysis-polling-api/sentiment-analysis): определяет эмоциональную окраску речи в загруженном аудио или видео.
+- [POST `/api/v1/sentiment_analysis/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/sentiment-analysis-polling-api/task-done): помечает задачу анализа тональности завершённой и удаляет её из списка активных.
+- [GET `/api/v1/sentiment_analysis/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/sentiment-analysis-polling-api/task-status): возвращает состояние задачи анализа тональности и результат при его готовности.
+- [POST `/api/v1/ai_service/summarize_file`](https://docs.speech.palatine.ru/api-reference/ai-service/summarize-file): создаёт задачу на суммаризацию загруженного медиа с выбранным промптом.
+- [POST `/api/v1/ai_service/summarize_text`](https://docs.speech.palatine.ru/api-reference/ai-service/summarize-text): создаёт задачу на суммаризацию переданного текста с выбранным промптом.
+- [POST `/api/v1/ai_service/task_done/{task_id}`](https://docs.speech.palatine.ru/api-reference/ai-service/task-done): помечает задачу суммаризации завершённой и удаляет её из списка активных.
+- [GET `/api/v1/ai_service/task_status/{task_id}`](https://docs.speech.palatine.ru/api-reference/ai-service/task-status): возвращает состояние задачи суммаризации и результат при его готовности.
+- [GET `/api/llm/v1/models`](https://docs.speech.palatine.ru/api-reference/chat-completions/list-models): список доступных LLM‑моделей в формате OpenAI.
+- [POST `/api/llm/v1/chat/completions`](https://docs.speech.palatine.ru/api-reference/chat-completions/chat-completions): совместимый с OpenAI эндпоинт чат‑комплишенов.
+- [GET `/api/v1/account/balance`](https://docs.speech.palatine.ru/api-reference/account/balance): баланс аккаунта, которому принадлежит токен: `real_money` — оплаченные средства, `virtual_money` — бонусные.
