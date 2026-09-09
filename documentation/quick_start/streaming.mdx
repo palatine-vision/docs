@@ -28,7 +28,14 @@ Real-Time Factor `< 1` - скорость обработки быстрее real
 
 ---
 
-> **Важно** Все запросы требуют авторизации через токен, передаваемый в query-параметре.
+> **Важно** Токен передаётся заголовком `Authorization: Bearer <ваш_токен>` либо
+> query-параметром `token`. Если переданы оба, приоритет у заголовка.
+
+<Note>
+Из браузера доступен только query-параметр: WebSocket API не позволяет задавать
+заголовки. Учитывайте, что токен в URL попадает в историю браузера и журналы
+промежуточных прокси — для серверных интеграций предпочтительнее заголовок.
+</Note>
 
 ### Пример потоковой транскрибации
 
@@ -38,14 +45,20 @@ Real-Time Factor `< 1` - скорость обработки быстрее real
 
     **URL для подключения:**
     ``` python
-    wss://api.palatine.ru/api/v1/stream/asr
+    wss://api.palatine.ru/api/v1/stream/asr?token=<YOUR_TOKEN>
+    ```
+
+    Либо без токена в URL — с заголовком, как в REST-части API:
+    ```http
+    GET wss://api.palatine.ru/api/v1/stream/asr
+    Authorization: Bearer <YOUR_TOKEN>
     ```
 
     **Параметры подключения:**
 
     | Параметр | Обязательный | По умолчанию | Описание |
     |----------|--------------|--------------|----------|
-    | `token` | Да | — | API токен для авторизации |
+    | `token` | Да, если токен не передан заголовком | — | API токен — тот же, что для REST-запросов |
     | `model` | Нет | `palatine_stream` | Модель распознавания |
     | `language` | Нет | `ru` | Язык аудио (ISO код) |
     | `sample_rate` | Нет | `48000` | Частота дискретизации входного аудио (8000-48000 Hz) |
@@ -74,7 +87,7 @@ Real-Time Factor `< 1` - скорость обработки быстрее real
       "format": "linear16",
       "language": "ru",
       "recommended_codec": "linear16",
-      "supported_codecs": ["linear16", "linear32", "opus", "flac", "mp3", "aac", "alaw", "mulaw", "amr-nb", "amr-wb", "ogg-opus", "speex", "g729"],
+      "supported_codecs": ["linear16", "linear32", "flac", "alaw", "mulaw", "amr-nb", "amr-wb", "g729", "opus", "ogg-opus", "speex", "mp3", "mp2", "aac", "webm", "mp4", "ogg", "wav", "m4a"],
       "supported_sample_rates": [8000, 16000, 22050, 32000, 44100, 48000]
     }
     ```
@@ -140,6 +153,51 @@ Real-Time Factor `< 1` - скорость обработки быстрее real
 
     > **Совет** Размер чанков может быть произвольным. Сервер буферизует данные
     и обрабатывает их блоками по 300ms.
+  </Accordion>
+
+  <Accordion title="Авторизация заголовком (PCM16, 16000 Hz)">
+    Серверным интеграциям удобнее передавать токен заголовком — тем же, что и в
+    REST-части API. Пример для телефонного профиля: raw PCM16, mono, 16000 Hz.
+
+    ```python
+    import asyncio
+    import websockets
+
+    API_URL = "wss://api.palatine.ru/api/v1/stream/asr"
+    TOKEN = "<YOUR_TOKEN>"
+    SAMPLE_RATE = 16000
+    CHUNK_SIZE = int(SAMPLE_RATE * 0.3 * 2)  # 300 мс = 9600 байт
+
+    async def stream_audio():
+        url = f"{API_URL}?sample_rate={SAMPLE_RATE}&codec=linear16&channels=1"
+
+        async with websockets.connect(
+            url, additional_headers={"Authorization": f"Bearer {TOKEN}"}
+        ) as ws:
+            print(await ws.recv())  # {"type": "config", ...}
+
+            async def send_audio():
+                # Сырой PCM16 LE без контейнера. Для .wav используйте
+                # wave.open() (как в примере выше) либо укажите codec=wav.
+                with open("audio.raw", "rb") as f:
+                    while chunk := f.read(CHUNK_SIZE):
+                        await ws.send(chunk)
+                        await asyncio.sleep(0.3)  # темп реального времени
+                await ws.send(b"")  # конец потока
+
+            async def receive():
+                async for message in ws:
+                    print(message)
+
+            await asyncio.gather(send_audio(), receive())
+
+    asyncio.run(stream_audio())
+    ```
+
+    <Note>
+    Параметр `additional_headers` доступен в библиотеке `websockets` начиная с версии
+    14.0. В более ранних версиях используйте `extra_headers`.
+    </Note>
   </Accordion>
 
   <Accordion title="Получение результатов">
@@ -211,6 +269,11 @@ Real-Time Factor `< 1` - скорость обработки быстрее real
     | `ML_SERVICE_ERROR` | Сервис распознавания недоступен |
     | `PROCESSING_ERROR` | Ошибка при обработке аудио |
     | `INTERNAL_ERROR` | Внутренняя ошибка сервера |
+
+    **HTTP 403 при подключении** — токен не передан или неактивен. Соединение
+    отклоняется на этапе рукопожатия, поэтому описания причины в ответе нет:
+    проверьте, что токен передан заголовком либо query-параметром, и что ключ
+    активен в личном кабинете.
 
     **Коды закрытия WebSocket:**
 
