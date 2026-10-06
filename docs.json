@@ -48,7 +48,8 @@
               "documentation/quick_start/sentiment_analyze",
               "documentation/quick_start/summarization",
               "documentation/quick_start/chat_completions",
-              "documentation/quick_start/diarization"
+              "documentation/quick_start/diarization",
+              "documentation/quick_start/call_analytics"
             ]
           },
           {
