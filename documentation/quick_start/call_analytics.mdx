@@ -19,6 +19,7 @@ title: 'Анализ звонка: роли, эмоции, фильтр мата
 |----------|--------------------|--------------------|
 | `POST /api/v1/transcribe/do_transcribe` (асинхронный) | поля формы (`-F`) **или** query-параметры; если указаны оба — берётся поле формы | все три |
 | `POST /api/v1/audio/transcriptions` (OpenAI-совместимый, синхронный) | поля формы | все три |
+| `POST /api/v1/transcribe/do_transcribe_by_url` (асинхронный, файл по ссылке) | поле JSON-тела | только `profanity_filter`; `roles` / `emotions` → `422` |
 
 <Note>
 На `/transcribe/do_transcribe` прочие параметры (`model`, `diarization_model`,
@@ -74,9 +75,12 @@ title: 'Анализ звонка: роли, эмоции, фильтр мата
 Значения не зависят от регистра; любое другое значение — `422`.
 
 - Эвфемизмы и смягчённые формы («блин», «хрен» и т. п.) не маскируются ни на одном уровне.
-- В слове остаются первая и последняя буквы, середина заменяется на `*`:
-  `Сука!` → `С**а!`. Маска **необратима** — исходный текст не сохраняется.
-- Маскируется весь текст результата: `text`, `segments[].text`, `words[].word`; поле
+- В слове сохраняются первая и последняя буквы, вся середина заменяется на `*`
+  (слово из шести букв превратится в `Х****Х`, где `Х` — исходные первая и последняя
+  буквы). Схема маски одна для обоих уровней — уровень определяет только, какие слова
+  маскируются. Маска **необратима** — исходный текст не сохраняется.
+- Маскируется весь текст результата: `text`, `segments[].text`, `words[].word`, а у
+  обычной транскрипции (без диаризации) — и `segments[].words`; поле
   `segments[].tokens` очищается. Маска сохраняется и в выгрузках
   (`/download_as_file`, форматы `srt`/`vtt` и др.).
 - Фильтр работает и без диаризации — с обычной транскрипцией.
@@ -129,6 +133,15 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
   -F "profanity_filter=true"
 ```
   </Tab>
+  <Tab title="cURL (файл по ссылке)">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe_by_url" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"source_url": "https://example.com/call.mp3", "profanity_filter": "hard"}'
+# → {"status": "scheduled", "task_id": "..."}
+```
+  </Tab>
 </Tabs>
 
 Результат асинхронной задачи — через `GET /api/v1/transcribe/task_status/{task_id}`
@@ -140,6 +153,8 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 </Note>
 
 ## Формат ответа
+
+В примере ниже `Х***` — условное обозначение замаскированного слова (уровень `soft`).
 
 Поля опций появляются в ответе, **только если опция запрошена** (тогда поле есть
 всегда, при неудаче — со значением `null`). Поле `speaker` в сегментах ролью не заменяется.
@@ -164,7 +179,7 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
       },
       {
         "id": 1, "speaker": "SPEAKER_01", "start": 3.5, "end": 9.8,
-        "text": "Б***ь, третий раз звоню, а заказа всё нет!",
+        "text": "Х***, третий раз звоню, а заказа всё нет!",
         "role": "Клиент",
         "emotion": {
           "label": "angry", "confidence": 0.84,
@@ -198,7 +213,7 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 | `segments[].emotion` | `label` — эмоция, `confidence` — уверенность `[0, 1]`, `probs` — вероятности всех эмоций; `null` — эмоция не определена |
 | `segments[].profanity` | `true` — в реплике была замаскирована лексика |
 | `speaker_roles` | `SPEAKER_xx` → роль (или `null`); `null` целиком — роли определить не удалось |
-| `speakers` | Сводка по говорящим: `talk_time` (секунды речи), `turns` (число реплик) и поля запрошенных опций — `role`, `profanity_count` (число замаскированных слов), `emotions` (доли эмоций по времени речи) |
+| `speakers` | Сводка по говорящим: `talk_time` (секунды речи), `turns` (число реплик) и поля запрошенных опций — `role`, `profanity_count` (число замаскированных слов), `emotions` (доли эмоций по времени речи). Поле есть, только если в записи выделены говорящие |
 | `included_processing` | Опции, которые **фактически выполнились** — `speaker_roles`, `emotions`, `profanity_filter` |
 | `warnings` | Почему опция не выполнилась (коды ниже) |
 
@@ -219,7 +234,7 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 | `speaker_roles_skipped:single_speaker` | В записи один говорящий — роли не определяются |
 | `speaker_roles_skipped:no_speakers` | Говорящие не выделены |
 | `speaker_roles_skipped:no_text` | Недостаточно распознанного текста, чтобы различить роли |
-| `emotions_unavailable` | Эмоции временно не удалось определить |
+| `emotions_unavailable` | Эмоции не удалось определить: временный сбой или все реплики слишком короткие для анализа |
 | `emotions_skipped:language` | Язык записи не русский |
 | `emotions_skipped:no_speakers` | Говорящие не выделены |
 
@@ -245,7 +260,15 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 | Код | Когда |
 |-----|-------|
 | `403` с `"code": "feature_disabled"` | Опция не подключена для вашего аккаунта. Запрос отклоняется до создания задачи, без списаний. Чтобы подключить — обратитесь в поддержку |
-| `422` | Неверное значение опции; `roles`/`emotions` без `diarization_model` |
+| `422` | Неверное значение опции; `roles`/`emotions` без `diarization_model`; `roles`/`emotions` на `/do_transcribe_by_url` |
+
+Проверки выполняются по порядку, до создания задачи и без списаний:
+
+1. Значения опций (и `roles`/`emotions` на `/do_transcribe_by_url`) — иначе `422`.
+2. Подключена ли опция для аккаунта — иначе `403 feature_disabled`.
+3. Для `roles`/`emotions` указан `diarization_model` — иначе `422`.
+
+Поэтому если опция не подключена, запрос с `roles`/`emotions` без диаризации вернёт `403`, а не `422`.
 
 ```json
 { "detail": "...", "code": "feature_disabled" }
