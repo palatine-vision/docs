@@ -24,7 +24,8 @@ title: 'Анализ звонка: роли, эмоции, фильтр мата
 <Note>
 На `/transcribe/do_transcribe` прочие параметры (`model`, `diarization_model`,
 `num_speakers`, …) по-прежнему передаются **только в query** — полями формы
-принимаются лишь `roles`, `emotions` и `profanity_filter`. На `/audio/transcriptions`
+принимаются лишь `roles`, `emotions`, `profanity_filter`, `profanity_mask` и
+`profanity_positions`. На `/audio/transcriptions`
 все параметры, как и раньше, — поля формы.
 </Note>
 
@@ -250,7 +251,8 @@ curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe_by_url" \
 
 ```json
 "profanity_hits": [
-  { "segment_id": 1, "speaker": "SPEAKER_01", "start": 3.52, "end": 3.98, "word_index": 17 }
+  { "segment_id": 1, "speaker": "SPEAKER_01", "start": 3.52, "end": 3.98, "word_index": 4 },
+  "..."
 ]
 ```
 
@@ -307,6 +309,7 @@ curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe_by_url" \
 
 | Код | Когда |
 |-----|-------|
+| `403` без поля `code` | Нет заголовка `Authorization: Bearer <токен>` |
 | `403` с `"code": "feature_disabled"` | Опция не подключена для вашего аккаунта. Запрос отклоняется до создания задачи, без списаний. Чтобы подключить — обратитесь в поддержку |
 | `422` | Неверное значение опции или параметра фильтра; `profanity_mask` / `profanity_positions=true` без `profanity_filter`; `roles`/`emotions` без `diarization_model`; `roles`/`emotions` на `/do_transcribe_by_url` |
 

@@ -36,13 +36,15 @@ title: 'Фильтр мата для текста'
 
 ## Пример запроса
 
+В примерах `Х****Х` — условное обозначение нецензурного слова: подставьте свой текст.
+
 <Tabs>
   <Tab title="cURL">
 ```bash
 curl -X POST "https://api.palatine.ru/api/v1/profanity/filter" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"text": "Ну что за ..., опять не работает!", "positions": true}'
+  -d '{"text": "Ну что за Х****Х, опять не работает!", "positions": true}'
 ```
   </Tab>
   <Tab title="Python">
@@ -53,9 +55,7 @@ resp = requests.post(
     "https://api.palatine.ru/api/v1/profanity/filter",
     headers={"Authorization": "Bearer <YOUR_TOKEN>"},
     json={
-        "texts": ["первое сообщение", "второе сообщение"],
-        "level": "soft",
-        "mask": "full",
+        "texts": ["Всё отлично", "Ну что за Х****Х, опять не работает!"],
         "positions": True,
     },
 )
@@ -66,8 +66,6 @@ result = resp.json()
 </Tabs>
 
 ## Формат ответа
-
-В примерах `Х****Х` — условное обозначение замаскированного слова.
 
 Запрос с `text`:
 
@@ -129,6 +127,7 @@ const word = chars.slice(hit.start, hit.end).join("");
 | Код | Когда |
 |-----|-------|
 | `401` | Неверный токен авторизации |
+| `403` без поля `code` | Нет заголовка `Authorization: Bearer <токен>` |
 | `403` с `"code": "feature_disabled"` | Функция не подключена для вашего аккаунта. Чтобы подключить — обратитесь в поддержку |
 | `413` | Сумма символов во всех текстах больше 100 000 — разбейте текст на несколько запросов |
 | `422` | Некорректное тело: нет ни `text`, ни `texts` или указаны оба; больше 100 текстов; один текст длиннее 100 000 символов; неверное значение `level` / `mask`; неизвестное поле |
