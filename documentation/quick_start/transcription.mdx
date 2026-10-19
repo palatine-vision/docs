@@ -83,8 +83,11 @@ files = {"file": open("audio.mp3", "rb")}
 headers = {"Authorization": f"Bearer {TOKEN}"}
 params = {
     "model": "palatine_large_highspeed",  # или palatine_small
-    "fast_inference": True  # ускоренный режим (по умолчанию включён)
+    "fast_inference": True,  # ускоренный режим (по умолчанию включён)
+    # "language": "ru",  # опционально: язык записи, отключает автоопределение
 }
+# Словарь терминов (названия, имена) — опционально, см. «Словарь терминов»:
+# data = {"dictionary": ["Форум Сити", "Ольховский"]}
 
 response = requests.post(API_URL, files=files, headers=headers, params=params)
 print(response.json())

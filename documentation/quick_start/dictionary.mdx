@@ -1,0 +1,111 @@
+---
+title: 'Словарь терминов'
+---
+
+Параметр `dictionary` передаёт модели список терминов: названия жилых комплексов, улиц,
+продуктов, имена и фамилии сотрудников. Модель чаще пишет их так, как в списке, а не
+созвучными словами («Форум Сити», а не «Орумсити»).
+
+<Tip>
+Словарь **бесплатный**: оплачивается только распознавание.
+</Tip>
+
+<Warning>
+Словарь заметно улучшает написание терминов, но не гарантирует его. Проверьте результат
+на своих записях.
+
+Если в канале слышно второго собеседника (эхо, общий канал на двоих), словарь может
+добавить лишний текст в паузах. На таких записях сравните результат со словарём и без него.
+</Warning>
+
+## Где работает
+
+| Эндпоинт | Как передать |
+|----------|--------------|
+| `POST /api/v1/transcribe/do_transcribe` | Поле формы или query-параметр `dictionary` |
+| `POST /api/v1/transcribe/do_transcribe_by_url` | Поле `dictionary` в JSON-теле — массив строк |
+| `POST /api/v1/audio/transcriptions` | Поле формы `dictionary` |
+
+Работает с диаризацией и без. Распознавание со словарём идёт на модели
+`palatine_large_highspeed` (или `palatine_small`, если вы указали её). Режим —
+только `fast_inference=true` (по умолчанию). С `fast_inference=false` вернётся `422`.
+
+## Формат
+
+Передайте термины одним из способов:
+
+- повторите параметр на каждый термин: `dictionary=Форум Сити&dictionary=Ольховский`;
+- одной строкой через запятую: `dictionary=Форум Сити, Ольховский`;
+- JSON-массивом: `dictionary=["Форум Сити", "Ольховский"]`.
+
+Если в термине есть запятая (`Римского-Корсакова, 11`), передайте термины повтором
+параметра или JSON-массивом.
+
+## Ограничения
+
+| Что | Предел |
+|-----|--------|
+| Терминов | до **40** |
+| Длина термина | до **50** символов |
+| Все термины вместе | до **300** символов |
+
+При превышении запрос отклоняется с кодом `422`, задача не создаётся. Пустые строки и
+повторы (без учёта регистра) отбрасываются.
+
+**Советы:**
+- Пишите термины в начальной форме и так, как они должны выглядеть в тексте:
+  «Ольховский», «ЖК Мечта». Модель сама поставит нужный падеж.
+- Включайте только то, что модель путает. Общеупотребительные слова в словаре не нужны.
+- Вместе со словарём задайте язык записи `language=ru`
+  (см. [Поддерживаемые языки](/documentation/technical_information/supported_languages)).
+
+## Пример
+
+<Tabs>
+  <Tab title="Python">
+```python
+import requests
+
+API_URL = "https://api.palatine.ru/api/v1/transcribe/do_transcribe"
+TOKEN = "<YOUR_TOKEN>"
+
+response = requests.post(
+    API_URL,
+    headers={"Authorization": f"Bearer {TOKEN}"},
+    params={"model": "palatine_large_highspeed", "language": "ru"},
+    files={"file": open("call.mp3", "rb")},
+    data={"dictionary": ["Форум Сити", "Ольховский", "Александровский сад"]},
+)
+print(response.json())  # {"status": "scheduled", "task_id": "..."}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?model=palatine_large_highspeed&language=ru" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -F "file=@call.mp3" \
+  -F "dictionary=Форум Сити" \
+  -F "dictionary=Ольховский" \
+  -F "dictionary=Александровский сад"
+```
+  </Tab>
+  <Tab title="OpenAI SDK">
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://api.palatine.ru/api/v1", api_key="<YOUR_TOKEN>")
+
+with open("call.mp3", "rb") as f:
+    result = client.audio.transcriptions.create(
+        file=f,
+        model="palatine_large_highspeed",
+        language="ru",
+        extra_body={"dictionary": "Форум Сити, Ольховский, Александровский сад"},
+    )
+print(result.text)
+```
+  </Tab>
+</Tabs>
+
+Параметр `prompt` в `/audio/transcriptions` принимается для совместимости с OpenAI, но на
+распознавание не влияет. Для терминов используйте `dictionary`.

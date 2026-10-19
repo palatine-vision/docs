@@ -44,6 +44,7 @@
             "group": "Quick start",
             "pages": [
               "documentation/quick_start/transcription",
+              "documentation/quick_start/dictionary",
               "documentation/quick_start/streaming",
               "documentation/quick_start/sentiment_analyze",
               "documentation/quick_start/summarization",
