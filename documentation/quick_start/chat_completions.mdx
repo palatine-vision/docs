@@ -1,5 +1,6 @@
 ---
 title: 'Чат с LLM (OpenAI-совместимый)'
+description: 'Работа с языковыми моделями через OpenAI-совместимый API: стандартный OpenAI SDK или любой HTTP-клиент.'
 ---
 
 Palatine LLM API предоставляет OpenAI-совместимый интерфейс для работы с большими языковыми моделями.
@@ -324,7 +325,7 @@ curl -X POST "https://api.palatine.ru/api/llm/v1/chat/completions" \
 | `max_tokens` | int | Нет | Максимальное количество токенов в ответе |
 | `thinking` | bool | Нет | Режим расширенных рассуждений. По умолчанию: false |
 | `response_format` | object | Нет | Формат ответа (`{"type": "json_object"}`) |
-| `format` | object | Нет | Схема структурированного вывода (Ollama-формат) |
+| `format` | object | Нет | Схема структурированного вывода (JSON Schema) |
 
 **Роли сообщений:**
 | Роль | Описание |

@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
   "name": "Palatine Speech",
-  "description": "Speech-to-Text API, диаризация, распознавание речи, speaker diarization, cloud AI, REST API, gRPC, WebSocket, ASR, NLP, Palatine",
+  "description": "Документация Palatine Speech API: распознавание речи из аудио и видео, разметка говорящих, потоковая транскрибация по WebSocket, анализ тональности, конспекты и OpenAI-совместимый чат.",
   "colors": {
     "primary": "#350938",
     "light": "#EA4881",
