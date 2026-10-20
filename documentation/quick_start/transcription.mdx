@@ -37,6 +37,7 @@ with open("audio.mp3", "rb") as f:
         model="palatine_large_highspeed",
         # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
         # language="ru"  # опционально: указать язык аудио
+        # prompt="Звонок в управляющую компанию «Форум Сити»."  # опционально: подсказка
     )
 
 print(result)
@@ -57,6 +58,13 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 |--------|----------|
 | `palatine_large_highspeed` | Высокая точность, рекомендуется по умолчанию |
 | `palatine_small` | Быстрее, но менее точная |
+
+**Подсказка `prompt`.** Необязательный текст до 1000 символов, как в OpenAI API: тема
+разговора, названия, имена. Модель подстраивается под подсказку, в том числе под её
+стиль, и учитывает её конец. Пишите подсказку обычными предложениями с точками: голое
+перечисление слов через запятую убирает точки и в распознанном тексте. Для списка
+терминов надёжнее параметр [`dictionary`](/documentation/quick_start/dictionary).
+`prompt` и `dictionary` вместе передавать нельзя — вернётся `422`.
 
 Подробнее можно узнать в [документации OpenAI клиента](https://platform.openai.com/docs/api-reference/audio/createTranscription?lang=curl).
 

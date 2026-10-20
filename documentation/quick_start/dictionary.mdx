@@ -108,5 +108,9 @@ print(result.text)
   </Tab>
 </Tabs>
 
-Параметр `prompt` в `/audio/transcriptions` принимается для совместимости с OpenAI, но на
-распознавание не влияет. Для терминов используйте `dictionary`.
+## Словарь или `prompt`
+
+В `/audio/transcriptions` работает и параметр `prompt` из OpenAI API — свободная подсказка
+распознаванию. Для списка названий и имён надёжнее `dictionary`. Передавать `prompt` и
+`dictionary` в одном запросе нельзя — вернётся `422`. Подробнее о `prompt` — в разделе
+[Транскрибация и диаризация](/documentation/quick_start/transcription), блок «Транскрибация в формате OpenAI».
