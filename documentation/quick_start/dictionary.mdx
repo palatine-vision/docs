@@ -3,20 +3,15 @@ title: 'Словарь терминов'
 description: 'Параметр dictionary: список терминов, имён и названий, которые модель должна писать правильно; формат, ограничения и примеры.'
 ---
 
-Параметр `dictionary` передаёт модели список терминов: названия жилых комплексов, улиц,
-продуктов, имена и фамилии сотрудников. Модель чаще пишет их так, как в списке, а не
-созвучными словами («Форум Сити», а не «Орумсити»).
+Параметр `dictionary` передаёт модели термины, имена и собственные названия,
+чтобы подсказать их написание в распознанном тексте.
 
 <Tip>
 Словарь **бесплатный**: оплачивается только распознавание.
 </Tip>
 
 <Warning>
-Словарь заметно улучшает написание терминов, но не гарантирует его. Проверьте результат
-на своих записях.
-
-Если в канале слышно второго собеседника (эхо, общий канал на двоих), словарь может
-добавить лишний текст в паузах. На таких записях сравните результат со словарём и без него.
+Словарь не гарантирует правильное распознавание всех терминов.
 </Warning>
 
 ## Где работает
@@ -35,11 +30,11 @@ description: 'Параметр dictionary: список терминов, имё
 
 Передайте термины одним из способов:
 
-- повторите параметр на каждый термин: `dictionary=Форум Сити&dictionary=Ольховский`;
-- одной строкой через запятую: `dictionary=Форум Сити, Ольховский`;
-- JSON-массивом: `dictionary=["Форум Сити", "Ольховский"]`.
+- повторите параметр на каждый термин: `dictionary=Palatine Speech&dictionary=Екатерина`;
+- одной строкой через запятую: `dictionary=Palatine Speech, Екатерина`;
+- JSON-массивом: `dictionary=["Palatine Speech", "Екатерина"]`.
 
-Если в термине есть запятая (`Римского-Корсакова, 11`), передайте термины повтором
+Если в термине есть запятая (`Сервис, версия 2`), передайте термины повтором
 параметра или JSON-массивом.
 
 ## Ограничения
@@ -55,7 +50,7 @@ description: 'Параметр dictionary: список терминов, имё
 
 **Советы:**
 - Пишите термины в начальной форме и так, как они должны выглядеть в тексте:
-  «Ольховский», «ЖК Мечта». Модель сама поставит нужный падеж.
+  «Екатерина», «Palatine Speech». Форму слова в результате определяет модель.
 - Включайте только то, что модель путает. Общеупотребительные слова в словаре не нужны.
 - Вместе со словарём задайте язык записи `language=ru`
   (см. [Поддерживаемые языки](/documentation/technical_information/supported_languages)).
@@ -75,7 +70,7 @@ response = requests.post(
     headers={"Authorization": f"Bearer {TOKEN}"},
     params={"model": "palatine_large_highspeed", "language": "ru"},
     files={"file": open("call.mp3", "rb")},
-    data={"dictionary": ["Форум Сити", "Ольховский", "Александровский сад"]},
+    data={"dictionary": ["Palatine Speech", "Екатерина", "WebSocket"]},
 )
 print(response.json())  # {"status": "scheduled", "task_id": "..."}
 ```
@@ -85,9 +80,9 @@ print(response.json())  # {"status": "scheduled", "task_id": "..."}
 curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?model=palatine_large_highspeed&language=ru" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -F "file=@call.mp3" \
-  -F "dictionary=Форум Сити" \
-  -F "dictionary=Ольховский" \
-  -F "dictionary=Александровский сад"
+  -F "dictionary=Palatine Speech" \
+  -F "dictionary=Екатерина" \
+  -F "dictionary=WebSocket"
 ```
   </Tab>
   <Tab title="OpenAI SDK">
@@ -101,7 +96,7 @@ with open("call.mp3", "rb") as f:
         file=f,
         model="palatine_large_highspeed",
         language="ru",
-        extra_body={"dictionary": "Форум Сити, Ольховский, Александровский сад"},
+        extra_body={"dictionary": "Palatine Speech, Екатерина, WebSocket"},
     )
 print(result.text)
 ```
