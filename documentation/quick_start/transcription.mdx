@@ -37,7 +37,7 @@ with open("audio.mp3", "rb") as f:
         model="palatine_large_highspeed",
         # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
         # language="ru"  # опционально: указать язык аудио
-        # prompt="Звонок в управляющую компанию «Форум Сити»."  # опционально: подсказка
+        # prompt="Обсуждение сервиса Palatine Speech."  # опционально: подсказка
     )
 
 print(result)
@@ -94,7 +94,7 @@ params = {
     # "language": "ru",  # опционально: язык записи, отключает автоопределение
 }
 # Словарь терминов (названия, имена) — опционально, см. «Словарь терминов»:
-# data = {"dictionary": ["Форум Сити", "Ольховский"]}
+# data = {"dictionary": ["Palatine Speech", "Екатерина"]}
 
 response = requests.post(API_URL, files=files, headers=headers, params=params)
 print(response.json())

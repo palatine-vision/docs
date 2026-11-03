@@ -37,18 +37,22 @@ headers = {"Authorization": f"Bearer {TOKEN}"}
 
 # 1. Запуск задачи
 response = requests.post(API_URL, files=files, headers=headers)
+response.raise_for_status()
 task_id = response.json()["task_id"]
 
 # 2. Polling результата
 while True:
     status_response = requests.get(STATUS_URL.format(task_id=task_id), headers=headers)
+    status_response.raise_for_status()
     result = status_response.json()
-    if result.get("task_status"):  # Если задача завершена
+    status = result["status"]
+    if status == "success":
         print("Готово:", result)
         break
-    else:
-        print("Задача ещё в работе, ждем 3 секунды...")
-        time.sleep(3)
+    if status == "error":
+        raise RuntimeError(result.get("error") or "Ошибка обработки задачи")
+    print("Задача ещё в работе, ждём 3 секунды...")
+    time.sleep(3)
 ```
 
 ## Особенности
