@@ -14,7 +14,8 @@ Palatine AI Service превращает длинные записи встре�
 </Steps>
 
 <Tip>
-Параметр `thinking` включает расширенный reasoning перед выдачей ответа (по умолчанию выключен). Даёт более качественный результат, но занимает больше времени.
+Параметр `thinking` включает расширенный режим рассуждений (по умолчанию выключен).
+Он может помочь в сложных задачах, но увеличивает время ответа; качество зависит от задачи.
 </Tip>
 
 ---
@@ -76,7 +77,8 @@ curl -X POST "https://api.palatine.ru/api/v1/ai_service/summarize_file?task=meet
 
   <Accordion title="Суммаризация текста">
 
-Если расшифровка уже есть, можно отправить чистый текст на `POST /ai_service/summarize_text`.
+Если расшифровка уже есть, отправьте её на `POST /api/v1/ai_service/summarize_text`.
+Тело запроса — JSON-строка; параметры `task`, `prompt` и `thinking` передаются в query.
 
 <Tabs>
   <Tab title="Python">
@@ -92,7 +94,7 @@ response = requests.post(
     API_URL,
     headers=headers,
     params=params,
-    json={"text": "Протокол встречи ..."}
+    json="Протокол встречи ..."
 )
 print(response.json())
 ```
@@ -102,7 +104,7 @@ print(response.json())
 curl -X POST "https://api.palatine.ru/api/v1/ai_service/summarize_text?task=user_prompt&prompt=Выдели%20риски" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"text": "Протокол встречи ..."}'
+  -d '"Протокол встречи ..."'
 ```
   </Tab>
 </Tabs>

@@ -25,8 +25,8 @@ description: 'Опции транскрипции roles, emotions и profanity_f
 <Note>
 На `/transcribe/do_transcribe` прочие параметры (`model`, `diarization_model`,
 `num_speakers`, …) по-прежнему передаются **только в query** — полями формы
-принимаются лишь `roles`, `emotions`, `profanity_filter`, `profanity_mask` и
-`profanity_positions`. На `/audio/transcriptions`
+принимаются `roles`, `emotions`, `profanity_filter`, `profanity_mask`,
+`profanity_positions` и `dictionary`. На `/audio/transcriptions`
 все параметры, как и раньше, — поля формы.
 </Note>
 
@@ -244,10 +244,11 @@ curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe_by_url" \
 каждое замаскированное слово (без параметра ключа нет):
 
 ```json
-"profanity_hits": [
-  { "segment_id": 1, "speaker": "SPEAKER_01", "start": 3.52, "end": 3.98, "word_index": 4 },
-  "..."
-]
+{
+  "profanity_hits": [
+    { "segment_id": 1, "speaker": "SPEAKER_01", "start": 3.52, "end": 3.98, "word_index": 4 }
+  ]
+}
 ```
 
 | Поле | Значение |

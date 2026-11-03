@@ -37,7 +37,7 @@ with open("audio.mp3", "rb") as f:
         model="palatine_large_highspeed",
         # response_format="json" | "verbose_json" | "text" | "srt" | "vtt"
         # language="ru"  # опционально: указать язык аудио
-        # prompt="Звонок в управляющую компанию «Форум Сити»."  # опционально: подсказка
+        # prompt="Обсуждение сервиса Palatine Speech."  # опционально: подсказка
     )
 
 print(result)
@@ -59,11 +59,9 @@ curl -X POST "https://api.palatine.ru/api/v1/audio/transcriptions" \
 | `palatine_large_highspeed` | Высокая точность, рекомендуется по умолчанию |
 | `palatine_small` | Быстрее, но менее точная |
 
-**Подсказка `prompt`.** Необязательный текст до 1000 символов, как в OpenAI API: тема
-разговора, названия, имена. Модель подстраивается под подсказку, в том числе под её
-стиль, и учитывает её конец. Пишите подсказку обычными предложениями с точками: голое
-перечисление слов через запятую убирает точки и в распознанном тексте. Для списка
-терминов надёжнее параметр [`dictionary`](/documentation/quick_start/dictionary).
+**Подсказка `prompt`.** Необязательный текст до 1000 символов: тема разговора,
+названия и имена. Подсказка может влиять на стиль распознанного текста.
+Для списка терминов используйте [`dictionary`](/documentation/quick_start/dictionary).
 `prompt` и `dictionary` вместе передавать нельзя — вернётся `422`.
 
 Подробнее можно узнать в [документации OpenAI клиента](https://platform.openai.com/docs/api-reference/audio/createTranscription?lang=curl).
@@ -96,7 +94,7 @@ params = {
     # "language": "ru",  # опционально: язык записи, отключает автоопределение
 }
 # Словарь терминов (названия, имена) — опционально, см. «Словарь терминов»:
-# data = {"dictionary": ["Форум Сити", "Ольховский"]}
+# data = {"dictionary": ["Palatine Speech", "Екатерина"]}
 
 response = requests.post(API_URL, files=files, headers=headers, params=params)
 print(response.json())
