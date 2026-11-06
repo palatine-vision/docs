@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
   "name": "Palatine Speech",
-  "description": "Документация Palatine Speech API: распознавание речи из аудио и видео, диаризация (разделение спикеров), потоковая транскрибация по WebSocket, анализ тональности, конспекты и OpenAI-совместимый чат.",
+  "description": "Документация Palatine Speech API: распознавание речи из аудио и видео, диаризация (разделение спикеров), потоковая транскрибация по WebSocket, синтез речи, анализ тональности, конспекты и OpenAI-совместимый чат.",
   "colors": {
     "primary": "#350938",
     "light": "#EA4881",
