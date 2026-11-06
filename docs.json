@@ -55,6 +55,12 @@
             ]
           },
           {
+            "group": "Закрытая бета",
+            "pages": [
+              "documentation/beta/text_to_speech"
+            ]
+          },
+          {
             "group": "Advanced tutorial",
             "pages": []
           },
