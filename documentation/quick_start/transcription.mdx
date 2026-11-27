@@ -109,7 +109,7 @@ curl -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?model=pala
   </Tab>
 </Tabs>
 
-**Модель для русской речи.** Если вашему аккаунту доступна `palatine_large_ru_v1`, передайте её в параметре `model`. Для русскоязычной записи укажите `language=ru`.
+**Модель `palatine_large_ru_v1`** оптимизирована для распознавания русской речи. Выберите её в параметре `model`. Язык можно указать явно с помощью `language=ru`.
 
 ```bash
 curl -sS -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?model=palatine_large_ru_v1&language=ru" \
@@ -117,7 +117,7 @@ curl -sS -X POST "https://api.palatine.ru/api/v1/transcribe/do_transcribe?model=
   -F "file=@audio.mp3"
 ```
 
-При использовании словаря или если сервис не уверен в распознавании русской речи может использоваться резервная модель. Результат доступен через тот же опрос статуса по `task_id`.
+Если указан другой язык или передан словарь, сервис использует универсальную модель. Она также может использоваться, если сервис не смог уверенно определить язык записи как русский. Результат доступен через тот же опрос статуса по `task_id`.
 
 Пример ответа:
 ```json
